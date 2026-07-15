@@ -515,11 +515,12 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
       ref={scrollContainerRef}
       onScroll={handleScroll}
       className={cn(
-        "flex-grow overflow-y-auto custom-scroll-area flex flex-col justify-between min-h-screen w-full relative transition-all duration-300",
+        "flex-grow overflow-y-auto custom-scroll-area flex flex-col min-h-screen w-full relative transition-all duration-300",
         !isHomeOrMovies && "px-3 sm:px-6 pb-8 pt-[72px]"
       )}
     >
-      {/* Conditionally rendered details, search, watch and category pages to ensure correct lifecycle mounts */}
+      <div className="flex-grow flex-1 flex flex-col w-full relative">
+        {/* Conditionally rendered details, search, watch and category pages to ensure correct lifecycle mounts */}
       {pageTitle === 'watch-tv' && (
         <WatchTVPage
           tvId={getTVIdFromWatchPath(window.location.pathname) || ''}
@@ -1006,6 +1007,7 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
             </motion.div>
           </Container>
         )}
+      </div>
 
       {/* Embedded premium minimal footer */}
       <motion.footer
