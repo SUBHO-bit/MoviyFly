@@ -1,0 +1,6 @@
+{
+  "name": "MoviyFly",
+  "description": "A premium movie streaming design system and OTT platform layout foundation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
