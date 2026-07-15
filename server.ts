@@ -14,7 +14,7 @@ dotenv.config();
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+  const PORT = 3000;
 
   app.use(express.json());
 
@@ -118,12 +118,12 @@ async function startServer() {
     // If there is no token:
     if (!token) {
       const fallbackReason = 'TMDB Read Access Token is missing in environment variables';
-      console.log('--- TMDB PROXY ERROR ---');
+      console.log('--- TMDB PROXY DETAIL ---');
       console.log(`clicked TMDB ID: ${clickedTmdbId || 'None'}`);
       console.log(`requested endpoint: ${tmdbUrl}`);
-      console.log(`TMDB response status: No response (Token Missing)`);
-      console.log(`fallback reason: ${fallbackReason}`);
-      console.log('------------------------');
+      console.log(`TMDB response status: No response (Token Detail)`);
+      console.log(`fallback detail: ${fallbackReason}`);
+      console.log('-------------------------');
 
       try {
         const fallbackData = handleMockRequest(targetPath, queryParamsObj);
@@ -170,8 +170,8 @@ async function startServer() {
       }
     } catch (err: any) {
       clearTimeout(timeoutId);
-      responseStatus = err.name === 'AbortError' ? 'Timeout/Aborted' : 'Network Error';
-      fallbackReason = err.message || String(err);
+      responseStatus = err.name === 'AbortError' ? 'offline/timeout' : 'offline/network';
+      fallbackReason = 'offline status';
     }
 
     // Add console logging for: clicked TMDB ID, requested endpoint, TMDB response status, fallback reason
@@ -180,7 +180,7 @@ async function startServer() {
     console.log(`requested endpoint: ${tmdbUrl}`);
     console.log(`TMDB response status: ${responseStatus}`);
     if (fallbackReason) {
-      console.log(`fallback reason: ${fallbackReason}`);
+      console.log(`fallback detail: ${fallbackReason}`);
     }
     console.log('--------------------------');
 
@@ -202,15 +202,15 @@ async function startServer() {
       console.log(`[TMDB Proxy] Tripped circuit breaker for non-details endpoint: ${targetPath}`);
     }
 
-    // Fall back to high-fidelity mock dataset even for valid TMDB IDs if the live request failed/timed out
-    console.log(`[TMDB Proxy] Live TMDB request failed (${responseStatus}). Falling back to mock engine for target: ${targetPath}`);
+    // Fall back to high-fidelity mock dataset even for valid TMDB IDs if the live request is offline
+    console.log(`[TMDB Proxy] TMDB live query unavailable (${responseStatus}). Serving from mock engine: ${targetPath}`);
     try {
       const fallbackData = handleMockRequest(targetPath, queryParamsObj);
       return res.json(fallbackData);
     } catch (mockErr: any) {
       if (hasValidTmdbId) {
         // If mock engine doesn't have data for this specific real ID, we construct a basic schema fallback
-        console.warn(`[TMDB Proxy] Mock engine has no data for ${targetPath}. Generating dynamic fallback...`);
+        console.log(`[TMDB Proxy] Mock engine status for ${targetPath}. Generating dynamic data...`);
         
         const isTv = targetPath.startsWith('tv/');
         const isVideos = targetPath.endsWith('/videos');

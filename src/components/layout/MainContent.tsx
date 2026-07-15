@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Play, Clapperboard, HelpCircle, Film, RefreshCw } from 'lucide-react';
+import { Play, Clapperboard, Film, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Container } from '../ui/Container';
@@ -1007,18 +1007,43 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
           </Container>
         )}
 
-      {/* Embedded footer */}
-      <footer className="pt-12 border-t border-white/5 text-[11px] text-text-muted flex flex-col sm:flex-row justify-between items-center gap-3">
-        <div>
-          <span>MoviyFly Application Client v2.1</span>
-          <span className="mx-2">•</span>
-          <span>AMOLED Cinematic Framework</span>
+      {/* Embedded premium minimal footer */}
+      <motion.footer
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-40px" }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full bg-[#0A0A0A] border-t border-white/[0.08] py-12 md:py-16 px-4 flex flex-col items-center justify-center text-center mt-auto z-10"
+      >
+        <div className="max-w-[900px] w-full flex flex-col items-center gap-6 md:gap-8 select-none">
+          {/* First Line */}
+          <div className="flex items-center justify-center gap-2.5 text-xs font-semibold text-text-secondary">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/8/89/Tmdb.svg"
+              alt="TMDB Logo"
+              className="h-3.5 w-auto object-contain brightness-95"
+              referrerPolicy="no-referrer"
+            />
+            <span>Powered by TMDB</span>
+          </div>
+
+          {/* Second Line */}
+          <div className="text-sm font-medium text-white tracking-wide">
+            Made with 👽 by <span className="font-extrabold">MOVIYFLY</span>
+          </div>
+
+          {/* Third Line */}
+          <p className="text-[11px] leading-[1.7] text-text-muted text-center max-w-[700px]">
+            This website does not retain any files on its server. Rather, it solely provides links to media content hosted by third-party services.
+          </p>
+
+          {/* Fourth Line */}
+          <div className="text-[10px] text-[#475569] text-center flex flex-col items-center gap-0.5 font-medium">
+            <span>© 2026 MOVIYFLY</span>
+            <span>All Rights Reserved</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <HelpCircle className="h-3.5 w-3.5 text-text-muted" />
-          <span>Need help? Contact support</span>
-        </div>
-      </footer>
+      </motion.footer>
     </div>
   );
 };
