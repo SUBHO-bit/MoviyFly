@@ -64,31 +64,37 @@ export const WatchPage: React.FC<WatchPageProps> = ({
   }, [movieId, fetchMovieDetails]);
 
   React.useEffect(() => {
-    if (movie) {
-      const image = movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : undefined);
-      const jsonLd = {
-        "@context": "https://schema.org",
-        "@type": "Movie",
-        "name": movie.title,
-        "description": movie.overview || `Watch ${movie.title} in HD quality on MoviyFly.`,
-        "image": image || "",
-        "dateCreated": movie.release_date || "",
-        "potentialAction": {
-          "@type": "WatchAction",
-          "target": window.location.href
-        }
-      };
-
+    return () => {
+      // Restore default homepage SEO on unmount
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://moviyfly1.onrender.com';
       updateClientSEO({
-        title: `Watch ${movie.title} - High Quality Stream on MoviyFly`,
-        description: `Stream ${movie.title} full movie in premium HD quality. ${movie.overview || ''}`,
+        title: 'MoviyFly - Watch Movies & TV Shows Online',
+        description: 'Watch trending movies and TV shows on MoviyFly.',
+        url: `${origin}/`,
+        type: 'website'
+      });
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (loading || !movie) {
+      updateClientSEO({
+        title: 'Watch Movie Online | MoviyFly',
+        description: 'Prepare your stream. High definition theater is loading on MoviyFly.',
+        type: 'video.movie',
+        url: typeof window !== 'undefined' ? window.location.href : '',
+      });
+    } else {
+      const image = movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : undefined);
+      updateClientSEO({
+        title: `Watch ${movie.title} Online | MoviyFly`,
+        description: movie.overview || `Stream ${movie.title} full movie in premium HD quality.`,
         image: image,
         type: 'video.movie',
-        url: window.location.href,
-        jsonLd: jsonLd
+        url: typeof window !== 'undefined' ? window.location.href : '',
       });
     }
-  }, [movie]);
+  }, [movie, loading]);
 
   const handleToggleWatchlist = () => {
     if (!movie) return;

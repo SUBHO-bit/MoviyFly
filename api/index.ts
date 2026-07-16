@@ -46,16 +46,16 @@ app.get('/api/health', (req, res) => {
 });
 
 // Dynamic robots.txt generator
-app.get('/api/robots', (req, res) => {
-  const host = req.headers.host || 'moviyfly1.vercel.app';
+app.get(['/robots.txt', '/api/robots'], (req, res) => {
+  const host = req.headers.host || 'moviyfly.vercel.app';
   const protocol = req.headers['x-forwarded-proto'] || 'https';
   res.type('text/plain');
   res.send(`User-agent: *\nAllow: /\n\nSitemap: ${protocol}://${host}/sitemap.xml\n`);
 });
 
 // Dynamic sitemap.xml generator
-app.get('/api/sitemap', (req, res) => {
-  const host = req.headers.host || 'moviyfly1.vercel.app';
+app.get(['/sitemap.xml', '/api/sitemap'], (req, res) => {
+  const host = req.headers.host || 'moviyfly.vercel.app';
   const protocol = req.headers['x-forwarded-proto'] || 'https';
   const today = new Date().toISOString().split('T')[0];
   res.type('application/xml');

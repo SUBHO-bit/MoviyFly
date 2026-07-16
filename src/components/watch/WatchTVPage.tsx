@@ -104,34 +104,37 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
   }, [tvId, fetchTVShowDetails]);
 
   React.useEffect(() => {
-    if (tvShow) {
-      const image = tvShow.backdrop_path ? `https://image.tmdb.org/t/p/original${tvShow.backdrop_path}` : (tvShow.poster_path ? `https://image.tmdb.org/t/p/w500${tvShow.poster_path}` : undefined);
-      const jsonLd = {
-        "@context": "https://schema.org",
-        "@type": "TVEpisode",
-        "name": `Season ${season} Episode ${episode} - ${tvShow.name}`,
-        "description": `Stream Season ${season} Episode ${episode} of ${tvShow.name} in HD quality on MoviyFly.`,
-        "image": image || "",
-        "partOfTVSeries": {
-          "@type": "TVSeries",
-          "name": tvShow.name
-        },
-        "potentialAction": {
-          "@type": "WatchAction",
-          "target": window.location.href
-        }
-      };
-
+    return () => {
+      // Restore default homepage SEO on unmount
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://moviyfly1.onrender.com';
       updateClientSEO({
-        title: `Watch ${tvShow.name} Season ${season} Episode ${episode} - Stream on MoviyFly`,
-        description: `Stream ${tvShow.name} Season ${season} Episode ${episode} in HD quality with fast streaming servers. ${tvShow.overview || ''}`,
+        title: 'MoviyFly - Watch Movies & TV Shows Online',
+        description: 'Watch trending movies and TV shows on MoviyFly.',
+        url: `${origin}/`,
+        type: 'website'
+      });
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (loading || !tvShow) {
+      updateClientSEO({
+        title: 'Watch TV Show Online | MoviyFly',
+        description: 'Prepare your stream. High definition series theater is loading on MoviyFly.',
+        type: 'video.tv_show',
+        url: typeof window !== 'undefined' ? window.location.href : '',
+      });
+    } else {
+      const image = tvShow.backdrop_path ? `https://image.tmdb.org/t/p/original${tvShow.backdrop_path}` : (tvShow.poster_path ? `https://image.tmdb.org/t/p/w500${tvShow.poster_path}` : undefined);
+      updateClientSEO({
+        title: `Watch ${tvShow.name} Season ${season} Episode ${episode} Online | MoviyFly`,
+        description: tvShow.overview || `Stream ${tvShow.name} Season ${season} Episode ${episode} in HD quality with fast streaming servers on MoviyFly.`,
         image: image,
         type: 'video.tv_show',
-        url: window.location.href,
-        jsonLd: jsonLd
+        url: typeof window !== 'undefined' ? window.location.href : '',
       });
     }
-  }, [tvShow, season, episode]);
+  }, [tvShow, season, episode, loading]);
 
   // 2. Synchronize url queries when back/forward navigation occurs
   React.useEffect(() => {

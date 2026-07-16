@@ -5,7 +5,7 @@ import { Header } from './Header';
 import { MainContent } from './MainContent';
 import { usePath, navigate } from '../../lib/router';
 import { CinematicSplash } from '../common/CinematicSplash';
-import { updateClientSEO } from '../../lib/seo';
+import { updateClientSEO, generateWebSiteJsonLd } from '../../lib/seo';
 
 export const AppLayout: React.FC = () => {
   const [collapsed, setCollapsed] = React.useState(false);
@@ -81,8 +81,11 @@ export const AppLayout: React.FC = () => {
       return;
     }
 
-    let seoTitle = 'MoviyFly - Stream Movies & TV Shows';
-    let seoDesc = 'Discover and watch the latest blockbuster movies and popular TV shows in premium high-definition on MoviyFly.';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://moviyfly1.onrender.com';
+    const currentUrl = path === '/' ? `${origin}/` : `${origin}${path}`;
+
+    let seoTitle = 'MoviyFly - Watch Movies & TV Shows Online';
+    let seoDesc = 'Watch trending movies and TV shows on MoviyFly.';
 
     if (activeItem === 'movies') {
       seoTitle = 'All Movies - MoviyFly Cinema';
@@ -103,32 +106,20 @@ export const AppLayout: React.FC = () => {
       seoDesc = `Explore the best of ${categoryName} movies and TV series curated specially for you on MoviyFly.`;
     }
 
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://moviyfly1.onrender.com';
-    const currentUrl = `${origin}${path}`;
-    const jsonLd = {
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      "name": seoTitle,
-      "description": seoDesc,
-      "url": currentUrl,
-      "isPartOf": {
-        "@type": "WebSite",
-        "name": "MoviyFly",
-        "url": origin + "/",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": origin + "/search?q={search_term_string}",
-          "query-input": "required name=search_term_string"
-        }
-      }
-    };
+    const websiteJsonLd = generateWebSiteJsonLd({
+      name: "MoviyFly",
+      alternateName: "MoviyFly Movies",
+      url: `${origin}/`,
+      description: "Watch Movies and TV Shows Online",
+      inLanguage: "en"
+    });
 
     updateClientSEO({
       title: seoTitle,
       description: seoDesc,
       type: 'website',
       url: currentUrl,
-      jsonLd: jsonLd
+      jsonLd: websiteJsonLd
     });
   }, [activeItem, path]);
 

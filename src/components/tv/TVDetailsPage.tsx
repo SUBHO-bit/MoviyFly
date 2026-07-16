@@ -7,7 +7,7 @@ import { MediaItem } from '../../types/media';
 import { tvService } from '../../services/tv.service';
 import { MovieData } from '../movie/MovieCard';
 import { navigate } from '../../lib/router';
-import { updateClientSEO } from '../../lib/seo';
+import { updateClientSEO, generateTVSeriesJsonLd, generateBreadcrumbsJsonLd } from '../../lib/seo';
 
 interface TVDetailsPageProps {
   tvId: string;
@@ -21,6 +21,7 @@ export const TVDetailsPage: React.FC<TVDetailsPageProps> = ({
   onToggleWatchlist,
 }) => {
   const [mediaItem, setMediaItem] = React.useState<MediaItem | null>(null);
+  const [rawDetails, setRawDetails] = React.useState<any | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -34,6 +35,7 @@ export const TVDetailsPage: React.FC<TVDetailsPageProps> = ({
       const details = await tvService.getFullTVDetails(rawTmdbId);
       const mapped = TVAdapter.toMediaItem(details);
       setMediaItem(mapped);
+      setRawDetails(details);
     } catch (err: any) {
       console.error('Error fetching TMDB TV details:', err);
       setError(err.message || 'The television details could not be loaded.');
@@ -49,21 +51,32 @@ export const TVDetailsPage: React.FC<TVDetailsPageProps> = ({
 
   React.useEffect(() => {
     if (mediaItem) {
-      const jsonLd = {
-        "@context": "https://schema.org",
-        "@type": "TVSeries",
-        "name": mediaItem.title,
-        "description": mediaItem.overview || `Stream ${mediaItem.title} on MoviyFly.`,
-        "image": mediaItem.poster || mediaItem.backdrop || "",
-        "dateCreated": mediaItem.releaseDate || "",
-        "genre": mediaItem.genres ? mediaItem.genres.map(g => g.name) : [],
-        "aggregateRating": mediaItem.rating ? {
-          "@type": "AggregateRating",
-          "ratingValue": mediaItem.rating,
-          "bestRating": "10",
-          "worstRating": "1"
-        } : undefined
-      };
+      const jsonLd = generateTVSeriesJsonLd({
+        name: mediaItem.title,
+        description: mediaItem.overview || `Binge watch ${mediaItem.title} seasons and episodes in high definition on MoviyFly.`,
+        image: mediaItem.backdrop || mediaItem.poster || '',
+        genre: mediaItem.genres ? mediaItem.genres.map(g => g.name) : [],
+        numberOfSeasons: mediaItem.seasonCount || rawDetails?.number_of_seasons || 1,
+        numberOfEpisodes: mediaItem.episodeCount || rawDetails?.number_of_episodes,
+        ratingValue: mediaItem.rating,
+        ratingCount: rawDetails?.vote_count,
+        url: window.location.href,
+      });
+
+      const breadcrumbsLd = generateBreadcrumbsJsonLd([
+        {
+          name: 'Home',
+          item: 'https://moviyfly.vercel.app/',
+        },
+        {
+          name: 'TV Shows',
+          item: 'https://moviyfly.vercel.app/tvshows',
+        },
+        {
+          name: mediaItem.title,
+          item: `https://moviyfly.vercel.app/tv/${tvId}`,
+        },
+      ]);
 
       updateClientSEO({
         title: `${mediaItem.title} - Stream TV Show on MoviyFly`,
@@ -71,10 +84,11 @@ export const TVDetailsPage: React.FC<TVDetailsPageProps> = ({
         image: mediaItem.backdrop || mediaItem.poster,
         type: 'video.tv_show',
         url: window.location.href,
-        jsonLd: jsonLd
+        jsonLd: jsonLd,
+        breadcrumbsLd: breadcrumbsLd,
       });
     }
-  }, [mediaItem]);
+  }, [mediaItem, rawDetails]);
 
   const handleBackToCatalog = () => {
     navigate('/tvshows');

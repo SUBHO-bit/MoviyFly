@@ -8,7 +8,7 @@ import { movieService } from '../../services/movie.service';
 import { tvService } from '../../services/tv.service';
 import { MovieData } from './MovieCard';
 import { navigate } from '../../lib/router';
-import { updateClientSEO } from '../../lib/seo';
+import { updateClientSEO, generateMovieJsonLd, generateTVSeriesJsonLd, generateBreadcrumbsJsonLd } from '../../lib/seo';
 
 interface MovieDetailsPageProps {
   movieId: string;
@@ -22,6 +22,8 @@ export const MovieDetailsPage: React.FC<MovieDetailsPageProps> = ({
   onToggleWatchlist,
 }) => {
   const [mediaItem, setMediaItem] = React.useState<MediaItem | null>(null);
+  const [rawDetails, setRawDetails] = React.useState<any | null>(null);
+  const [credits, setCredits] = React.useState<any | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -34,13 +36,23 @@ export const MovieDetailsPage: React.FC<MovieDetailsPageProps> = ({
     setError(null);
     try {
       if (isTv) {
-        const tvDetails = await tvService.getFullTVDetails(rawTmdbId);
+        const [tvDetails, tvCredits] = await Promise.all([
+          tvService.getFullTVDetails(rawTmdbId),
+          tvService.getTVCredits(rawTmdbId).catch(() => ({ cast: [], crew: [] }))
+        ]);
         const mapped = TVAdapter.toMediaItem(tvDetails);
         setMediaItem(mapped);
+        setRawDetails(tvDetails);
+        setCredits(tvCredits);
       } else {
-        const movieDetails = await movieService.getFullMovieDetails(rawTmdbId);
+        const [movieDetails, movieCredits] = await Promise.all([
+          movieService.getFullMovieDetails(rawTmdbId),
+          movieService.getMovieCredits(rawTmdbId).catch(() => ({ cast: [], crew: [] }))
+        ]);
         const mapped = MovieAdapter.toMediaItem(movieDetails);
         setMediaItem(mapped);
+        setRawDetails(movieDetails);
+        setCredits(movieCredits);
       }
     } catch (err: any) {
       console.error('Error fetching TMDB media details:', err);
@@ -59,21 +71,60 @@ export const MovieDetailsPage: React.FC<MovieDetailsPageProps> = ({
   React.useEffect(() => {
     if (mediaItem) {
       const type = isTv ? 'video.tv_show' : 'video.movie';
-      const jsonLd = {
-        "@context": "https://schema.org",
-        "@type": isTv ? "TVSeries" : "Movie",
-        "name": mediaItem.title,
-        "description": mediaItem.overview || `Stream ${mediaItem.title} on MoviyFly.`,
-        "image": mediaItem.poster || mediaItem.backdrop || "",
-        "dateCreated": mediaItem.releaseDate || "",
-        "genre": mediaItem.genres ? mediaItem.genres.map(g => g.name) : [],
-        "aggregateRating": mediaItem.rating ? {
-          "@type": "AggregateRating",
-          "ratingValue": mediaItem.rating,
-          "bestRating": "10",
-          "worstRating": "1"
-        } : undefined
-      };
+      let jsonLd: any = undefined;
+      const imageUrl = mediaItem.backdrop || mediaItem.poster || '';
+
+      if (isTv) {
+        jsonLd = generateTVSeriesJsonLd({
+          name: mediaItem.title,
+          description: mediaItem.overview || `Binge watch ${mediaItem.title} on MoviyFly.`,
+          image: imageUrl,
+          genre: mediaItem.genres ? mediaItem.genres.map(g => g.name) : [],
+          numberOfSeasons: mediaItem.seasonCount || rawDetails?.number_of_seasons || 1,
+          numberOfEpisodes: mediaItem.episodeCount || rawDetails?.number_of_episodes,
+          ratingValue: mediaItem.rating,
+          ratingCount: rawDetails?.vote_count,
+          url: window.location.href,
+        });
+      } else {
+        const actors = credits?.cast?.slice(0, 10).map((actor: any) => ({
+          name: actor.name,
+          image: actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : undefined,
+        }));
+        const directors = credits?.crew?.filter((member: any) => member.job === 'Director').map((dir: any) => ({
+          name: dir.name,
+          image: dir.profile_path ? `https://image.tmdb.org/t/p/w185${dir.profile_path}` : undefined,
+        }));
+
+        jsonLd = generateMovieJsonLd({
+          name: mediaItem.title,
+          description: mediaItem.overview || `Stream ${mediaItem.title} on MoviyFly.`,
+          image: imageUrl,
+          datePublished: mediaItem.releaseDate || '',
+          genre: mediaItem.genres ? mediaItem.genres.map(g => g.name) : [],
+          duration: rawDetails?.runtime ? `${rawDetails.runtime}m` : mediaItem.runtime,
+          ratingValue: mediaItem.rating,
+          ratingCount: rawDetails?.vote_count,
+          url: window.location.href,
+          actors,
+          directors,
+        });
+      }
+
+      const breadcrumbsLd = generateBreadcrumbsJsonLd([
+        {
+          name: 'Home',
+          item: 'https://moviyfly.vercel.app/',
+        },
+        {
+          name: isTv ? 'TV Shows' : 'Movies',
+          item: isTv ? 'https://moviyfly.vercel.app/tvshows' : 'https://moviyfly.vercel.app/movies',
+        },
+        {
+          name: mediaItem.title,
+          item: `https://moviyfly.vercel.app/movie/${movieId}`,
+        },
+      ]);
 
       updateClientSEO({
         title: `${mediaItem.title} - Stream on MoviyFly`,
@@ -81,10 +132,11 @@ export const MovieDetailsPage: React.FC<MovieDetailsPageProps> = ({
         image: mediaItem.backdrop || mediaItem.poster,
         type: type,
         url: window.location.href,
-        jsonLd: jsonLd
+        jsonLd: jsonLd,
+        breadcrumbsLd: breadcrumbsLd,
       });
     }
-  }, [mediaItem, isTv]);
+  }, [mediaItem, isTv, rawDetails, credits]);
 
   const handleBackToCatalog = () => {
     if (window.history.length > 1) {
