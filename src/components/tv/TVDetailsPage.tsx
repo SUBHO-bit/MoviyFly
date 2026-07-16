@@ -7,6 +7,7 @@ import { MediaItem } from '../../types/media';
 import { tvService } from '../../services/tv.service';
 import { MovieData } from '../movie/MovieCard';
 import { navigate } from '../../lib/router';
+import { updateClientSEO } from '../../lib/seo';
 
 interface TVDetailsPageProps {
   tvId: string;
@@ -45,6 +46,18 @@ export const TVDetailsPage: React.FC<TVDetailsPageProps> = ({
     fetchDetails();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [tvId, fetchDetails]);
+
+  React.useEffect(() => {
+    if (mediaItem) {
+      updateClientSEO({
+        title: `${mediaItem.title} - Stream TV Show on MoviyFly`,
+        description: mediaItem.overview || `Binge watch ${mediaItem.title} seasons and episodes in high definition on MoviyFly.`,
+        image: mediaItem.backdrop || mediaItem.poster,
+        type: 'video.tv_show',
+        url: window.location.href
+      });
+    }
+  }, [mediaItem]);
 
   const handleBackToCatalog = () => {
     navigate('/tvshows');

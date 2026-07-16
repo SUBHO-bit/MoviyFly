@@ -5,28 +5,23 @@ import { Header } from './Header';
 import { MainContent } from './MainContent';
 import { usePath, navigate } from '../../lib/router';
 import { CinematicSplash } from '../common/CinematicSplash';
+import { updateClientSEO } from '../../lib/seo';
 
 export const AppLayout: React.FC = () => {
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState('');
-  const isGoogleBot =
-  typeof navigator !== 'undefined' &&
-  /Googlebot|Google-InspectionTool/i.test(navigator.userAgent);
-
-const [showIntro, setShowIntro] = React.useState(!isGoogleBot);
+  const [showIntro, setShowIntro] = React.useState(false);
   
   const path = usePath();
 
   // Check if intro has been seen in this session
   React.useEffect(() => {
-  if (isGoogleBot) return;
-
-  const introSeen = sessionStorage.getItem('moviyfly_intro_seen');
-  if (!introSeen) {
-    setShowIntro(true);
-  }
-}, [isGoogleBot]);
+    const introSeen = sessionStorage.getItem('moviyfly_intro_seen');
+    if (!introSeen) {
+      setShowIntro(true);
+    }
+  }, []);
 
   // Sync search input value with URL search query parameter on back/forward or direct load
   React.useEffect(() => {
@@ -78,6 +73,43 @@ const [showIntro, setShowIntro] = React.useState(!isGoogleBot);
   React.useEffect(() => {
     setIsScrolled(false);
   }, [path]);
+
+  // Synchronize general pages SEO metadata on route change
+  React.useEffect(() => {
+    if (activeItem === 'movie-details' || activeItem === 'tv-details' || activeItem === 'watch-movie' || activeItem === 'watch-tv') {
+      // These details pages will manage their own highly detailed SEO metadata when details are loaded
+      return;
+    }
+
+    let seoTitle = 'MoviyFly - Stream Movies & TV Shows';
+    let seoDesc = 'Discover and watch the latest blockbuster movies and popular TV shows in premium high-definition on MoviyFly.';
+
+    if (activeItem === 'movies') {
+      seoTitle = 'All Movies - MoviyFly Cinema';
+      seoDesc = 'Explore our extensive collection of Hollywood, Bollywood, South Indian, and world cinema hits on MoviyFly.';
+    } else if (activeItem === 'tvshows') {
+      seoTitle = 'TV Shows & Series - MoviyFly OTT';
+      seoDesc = 'Binge watch premium TV shows, anime series, and Korean dramas in high quality on MoviyFly.';
+    } else if (activeItem === 'watchlist') {
+      seoTitle = 'My Cinema Watchlist - MoviyFly';
+      seoDesc = 'Access your personal curated watchlist of movies and TV shows you want to watch on MoviyFly.';
+    } else if (activeItem === 'search') {
+      seoTitle = 'Search Movies & TV Shows - MoviyFly';
+      seoDesc = 'Search the complete MoviyFly catalog for movies, TV series, actors, and directors.';
+    } else if (activeItem === 'category') {
+      const categorySlug = window.location.pathname.substring(window.location.pathname.lastIndexOf('/') + 1);
+      const categoryName = categorySlug ? categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1) : 'Genres';
+      seoTitle = `${categoryName} Movies - MoviyFly`;
+      seoDesc = `Explore the best of ${categoryName} movies and TV series curated specially for you on MoviyFly.`;
+    }
+
+    updateClientSEO({
+      title: seoTitle,
+      description: seoDesc,
+      type: 'website',
+      url: `https://moviyfly1.onrender.com${path}`
+    });
+  }, [activeItem, path]);
 
   return (
     <div className="flex h-screen w-screen bg-background text-text-primary overflow-hidden relative">

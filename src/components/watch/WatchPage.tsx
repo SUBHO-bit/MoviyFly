@@ -11,6 +11,7 @@ import { mapTMDBMovieToMovieData } from '../../lib/api/mappers';
 import { navigate } from '../../lib/router';
 import { LocalStorageManager } from './LocalStorageManager';
 import { PlayerController } from './PlayerController';
+import { updateClientSEO } from '../../lib/seo';
 
 interface WatchPageProps {
   movieId: string;
@@ -61,6 +62,18 @@ export const WatchPage: React.FC<WatchPageProps> = ({
 
     return () => clearTimeout(timer);
   }, [movieId, fetchMovieDetails]);
+
+  React.useEffect(() => {
+    if (movie) {
+      updateClientSEO({
+        title: `Watch ${movie.title} - High Quality Stream on MoviyFly`,
+        description: `Stream ${movie.title} full movie in premium HD quality. ${movie.overview || ''}`,
+        image: movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : undefined),
+        type: 'video.movie',
+        url: window.location.href
+      });
+    }
+  }, [movie]);
 
   const handleToggleWatchlist = () => {
     if (!movie) return;

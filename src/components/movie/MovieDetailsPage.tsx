@@ -8,6 +8,7 @@ import { movieService } from '../../services/movie.service';
 import { tvService } from '../../services/tv.service';
 import { MovieData } from './MovieCard';
 import { navigate } from '../../lib/router';
+import { updateClientSEO } from '../../lib/seo';
 
 interface MovieDetailsPageProps {
   movieId: string;
@@ -54,6 +55,18 @@ export const MovieDetailsPage: React.FC<MovieDetailsPageProps> = ({
     // Scroll to top when media changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [movieId, fetchMediaDetails]);
+
+  React.useEffect(() => {
+    if (mediaItem) {
+      updateClientSEO({
+        title: `${mediaItem.title} - Stream on MoviyFly`,
+        description: mediaItem.overview || `Stream ${mediaItem.title} on MoviyFly with high-quality sources and complete details.`,
+        image: mediaItem.backdrop || mediaItem.poster,
+        type: isTv ? 'video.tv_show' : 'video.movie',
+        url: window.location.href
+      });
+    }
+  }, [mediaItem, isTv]);
 
   const handleBackToCatalog = () => {
     if (window.history.length > 1) {

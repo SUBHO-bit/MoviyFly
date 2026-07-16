@@ -14,6 +14,7 @@ import { SimilarSeriesRow } from '../tv/SimilarSeriesRow';
 import { navigate } from '../../lib/router';
 import { LocalStorageManager } from './LocalStorageManager';
 import { PlayerController } from './PlayerController';
+import { updateClientSEO } from '../../lib/seo';
 
 interface WatchTVPageProps {
   tvId: string;
@@ -101,6 +102,18 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
 
     return () => clearTimeout(timer);
   }, [tvId, fetchTVShowDetails]);
+
+  React.useEffect(() => {
+    if (tvShow) {
+      updateClientSEO({
+        title: `Watch ${tvShow.name} Season ${season} Episode ${episode} - Stream on MoviyFly`,
+        description: `Stream ${tvShow.name} Season ${season} Episode ${episode} in HD quality with fast streaming servers. ${tvShow.overview || ''}`,
+        image: tvShow.backdrop_path ? `https://image.tmdb.org/t/p/original${tvShow.backdrop_path}` : (tvShow.poster_path ? `https://image.tmdb.org/t/p/w500${tvShow.poster_path}` : undefined),
+        type: 'video.tv_show',
+        url: window.location.href
+      });
+    }
+  }, [tvShow, season, episode]);
 
   // 2. Synchronize url queries when back/forward navigation occurs
   React.useEffect(() => {
