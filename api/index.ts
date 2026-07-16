@@ -1,7 +1,7 @@
 import express from 'express';
 import dns from 'dns';
 import dotenv from 'dotenv';
-import { handleMockRequest } from '../server-mock-data';
+import { handleMockRequest } from './server-mock-data';
 
 // Set DNS resolution order to favor IPv4 to prevent connection failures
 dns.setDefaultResultOrder('ipv4first');
