@@ -90,15 +90,16 @@ export function updateClientSEO(metadata: SEOMetadata) {
     document.head.appendChild(jsonLdScript);
   }
 
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://moviyfly1.onrender.com';
   const targetJsonLd = metadata.jsonLd || {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "MoviyFly",
-    "url": "https://moviyfly1.onrender.com/",
+    "url": origin + "/",
     "description": "Watch trending movies and TV shows online on MoviyFly.",
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://moviyfly1.onrender.com/search?q={search_term_string}",
+      "target": origin + "/search?q={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   };

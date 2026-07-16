@@ -32,6 +32,41 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // Direct robots.txt route
+  app.get('/robots.txt', (req, res) => {
+    res.redirect('/api/robots');
+  });
+
+  // Direct sitemap.xml route
+  app.get('/sitemap.xml', (req, res) => {
+    res.redirect('/api/sitemap');
+  });
+
+  // Dynamic robots.txt generator
+  app.get('/api/robots', (req, res) => {
+    const host = req.headers.host || 'localhost:3000';
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    res.type('text/plain');
+    res.send(`User-agent: *\nAllow: /\n\nSitemap: ${protocol}://${host}/sitemap.xml\n`);
+  });
+
+  // Dynamic sitemap.xml generator
+  app.get('/api/sitemap', (req, res) => {
+    const host = req.headers.host || 'localhost:3000';
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const today = new Date().toISOString().split('T')[0];
+    res.type('application/xml');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${protocol}://${host}/</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`);
+  });
+
   // Helper function to check if an ID is one of our defined mock IDs
   function isMockId(idStr: string): boolean {
     const idNum = parseInt(idStr, 10);

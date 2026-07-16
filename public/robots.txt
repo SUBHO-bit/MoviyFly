@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://moviyfly1.onrender.com/sitemap.xml
