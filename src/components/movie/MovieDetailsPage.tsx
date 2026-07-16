@@ -9,6 +9,7 @@ import { tvService } from '../../services/tv.service';
 import { MovieData } from './MovieCard';
 import { navigate } from '../../lib/router';
 import { updateClientSEO, generateMovieJsonLd, generateTVSeriesJsonLd, generateBreadcrumbsJsonLd } from '../../lib/seo';
+import { generateMovieSchema, generateTVSeriesSchema, generateBreadcrumbListSchema, injectSchema, clearSchema } from '../../lib/schema';
 
 interface MovieDetailsPageProps {
   movieId: string;
@@ -137,6 +138,75 @@ export const MovieDetailsPage: React.FC<MovieDetailsPageProps> = ({
       });
     }
   }, [mediaItem, isTv, rawDetails, credits]);
+
+  // Schema.org structured data injection
+  React.useEffect(() => {
+    if (mediaItem) {
+      const imageUrl = mediaItem.backdrop || mediaItem.poster || '';
+      
+      if (isTv) {
+        const tvSchema = generateTVSeriesSchema({
+          name: mediaItem.title,
+          description: mediaItem.overview || `Binge watch ${mediaItem.title} on MoviyFly.`,
+          poster: imageUrl,
+          firstAirDate: mediaItem.releaseDate || '',
+          genres: mediaItem.genres ? mediaItem.genres.map(g => g.name) : [],
+          numberOfSeasons: mediaItem.seasonCount || rawDetails?.number_of_seasons || 1,
+          rating: {
+            ratingValue: mediaItem.rating,
+            ratingCount: rawDetails?.vote_count || 100,
+          },
+          tmdbId: rawTmdbId,
+          canonicalUrl: `https://moviyfly.vercel.app/tv/${rawTmdbId}`,
+          inLanguage: rawDetails?.original_language,
+        });
+
+        const breadcrumbsSchema = generateBreadcrumbListSchema([
+          { name: 'Home', item: 'https://moviyfly.vercel.app/' },
+          { name: 'TV Shows', item: 'https://moviyfly.vercel.app/tvshows' },
+          { name: mediaItem.title, item: `https://moviyfly.vercel.app/tv/${rawTmdbId}` },
+        ]);
+
+        injectSchema(tvSchema, 'moviyfly-tv-schema');
+        injectSchema(breadcrumbsSchema, 'moviyfly-tv-breadcrumbs-schema');
+      } else {
+        const productionCompany = rawDetails?.production_companies?.map((c: any) => c.name);
+
+        const movieSchema = generateMovieSchema({
+          title: mediaItem.title,
+          description: mediaItem.overview || `Stream ${mediaItem.title} on MoviyFly.`,
+          poster: imageUrl,
+          releaseDate: mediaItem.releaseDate || '',
+          genres: mediaItem.genres ? mediaItem.genres.map(g => g.name) : [],
+          rating: {
+            ratingValue: mediaItem.rating,
+            ratingCount: rawDetails?.vote_count || 100,
+          },
+          runtime: rawDetails?.runtime || mediaItem.runtime,
+          tmdbId: rawTmdbId,
+          canonicalUrl: `https://moviyfly.vercel.app/movie/${rawTmdbId}`,
+          inLanguage: rawDetails?.original_language,
+          productionCompany: productionCompany && productionCompany.length > 0 ? productionCompany : undefined,
+        });
+
+        const breadcrumbsSchema = generateBreadcrumbListSchema([
+          { name: 'Home', item: 'https://moviyfly.vercel.app/' },
+          { name: 'Movies', item: 'https://moviyfly.vercel.app/movies' },
+          { name: mediaItem.title, item: `https://moviyfly.vercel.app/movie/${rawTmdbId}` },
+        ]);
+
+        injectSchema(movieSchema, 'moviyfly-movie-schema');
+        injectSchema(breadcrumbsSchema, 'moviyfly-movie-breadcrumbs-schema');
+      }
+    }
+
+    return () => {
+      clearSchema('moviyfly-movie-schema');
+      clearSchema('moviyfly-movie-breadcrumbs-schema');
+      clearSchema('moviyfly-tv-schema');
+      clearSchema('moviyfly-tv-breadcrumbs-schema');
+    };
+  }, [mediaItem, isTv, rawDetails, rawTmdbId]);
 
   const handleBackToCatalog = () => {
     if (window.history.length > 1) {

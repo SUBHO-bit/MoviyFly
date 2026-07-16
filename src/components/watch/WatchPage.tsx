@@ -12,6 +12,7 @@ import { navigate } from '../../lib/router';
 import { LocalStorageManager } from './LocalStorageManager';
 import { PlayerController } from './PlayerController';
 import { updateClientSEO } from '../../lib/seo';
+import { generateMovieSchema, generateVideoObjectSchema, injectSchema, clearSchema } from '../../lib/schema';
 
 interface WatchPageProps {
   movieId: string;
@@ -95,6 +96,48 @@ export const WatchPage: React.FC<WatchPageProps> = ({
       });
     }
   }, [movie, loading]);
+
+  // Schema.org structured data injection for movie watch page
+  React.useEffect(() => {
+    if (!loading && movie) {
+      const imageUrl = movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '');
+      const productionCompany = movie.production_companies?.map((c: any) => c.name);
+
+      const movieSchema = generateMovieSchema({
+        title: movie.title,
+        description: movie.overview || `Stream ${movie.title} full movie in premium HD quality on MoviyFly.`,
+        poster: imageUrl,
+        releaseDate: movie.release_date || '',
+        genres: movie.genres ? movie.genres.map(g => g.name) : [],
+        rating: {
+          ratingValue: movie.vote_average || 0,
+          ratingCount: movie.vote_count || 100,
+        },
+        runtime: movie.runtime,
+        tmdbId: rawTmdbId,
+        canonicalUrl: `https://moviyfly.vercel.app/movie/${rawTmdbId}`,
+        inLanguage: movie.original_language,
+        productionCompany: productionCompany && productionCompany.length > 0 ? productionCompany : undefined,
+      });
+
+      const videoSchema = generateVideoObjectSchema({
+        name: `Watch ${movie.title} Online`,
+        description: movie.overview || `Watch ${movie.title} full movie on MoviyFly.`,
+        thumbnailUrl: imageUrl,
+        embedUrl: typeof window !== 'undefined' ? window.location.href : `https://moviyfly.vercel.app/watch/movie/${rawTmdbId}`,
+        uploadDate: movie.release_date || '',
+        inLanguage: movie.original_language,
+      });
+
+      injectSchema(movieSchema, 'moviyfly-watch-movie-schema');
+      injectSchema(videoSchema, 'moviyfly-watch-video-schema');
+    }
+
+    return () => {
+      clearSchema('moviyfly-watch-movie-schema');
+      clearSchema('moviyfly-watch-video-schema');
+    };
+  }, [movie, rawTmdbId, loading]);
 
   const handleToggleWatchlist = () => {
     if (!movie) return;

@@ -8,6 +8,7 @@ import { tvService } from '../../services/tv.service';
 import { MovieData } from '../movie/MovieCard';
 import { navigate } from '../../lib/router';
 import { updateClientSEO, generateTVSeriesJsonLd, generateBreadcrumbsJsonLd } from '../../lib/seo';
+import { generateTVSeriesSchema, generateBreadcrumbListSchema, injectSchema, clearSchema } from '../../lib/schema';
 
 interface TVDetailsPageProps {
   tvId: string;
@@ -89,6 +90,42 @@ export const TVDetailsPage: React.FC<TVDetailsPageProps> = ({
       });
     }
   }, [mediaItem, rawDetails]);
+
+  // Schema.org structured data injection
+  React.useEffect(() => {
+    if (mediaItem) {
+      const imageUrl = mediaItem.backdrop || mediaItem.poster || '';
+      const tvSchema = generateTVSeriesSchema({
+        name: mediaItem.title,
+        description: mediaItem.overview || `Binge watch ${mediaItem.title} seasons and episodes in high definition on MoviyFly.`,
+        poster: imageUrl,
+        firstAirDate: mediaItem.releaseDate || '',
+        genres: mediaItem.genres ? mediaItem.genres.map(g => g.name) : [],
+        numberOfSeasons: mediaItem.seasonCount || rawDetails?.number_of_seasons || 1,
+        rating: {
+          ratingValue: mediaItem.rating,
+          ratingCount: rawDetails?.vote_count || 100,
+        },
+        tmdbId: rawTmdbId,
+        canonicalUrl: `https://moviyfly.vercel.app/tv/${rawTmdbId}`,
+        inLanguage: rawDetails?.original_language,
+      });
+
+      const breadcrumbsSchema = generateBreadcrumbListSchema([
+        { name: 'Home', item: 'https://moviyfly.vercel.app/' },
+        { name: 'TV Shows', item: 'https://moviyfly.vercel.app/tvshows' },
+        { name: mediaItem.title, item: `https://moviyfly.vercel.app/tv/${rawTmdbId}` },
+      ]);
+
+      injectSchema(tvSchema, 'moviyfly-tv-schema');
+      injectSchema(breadcrumbsSchema, 'moviyfly-tv-breadcrumbs-schema');
+    }
+
+    return () => {
+      clearSchema('moviyfly-tv-schema');
+      clearSchema('moviyfly-tv-breadcrumbs-schema');
+    };
+  }, [mediaItem, rawDetails, rawTmdbId]);
 
   const handleBackToCatalog = () => {
     navigate('/tvshows');

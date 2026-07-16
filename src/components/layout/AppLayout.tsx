@@ -6,6 +6,7 @@ import { MainContent } from './MainContent';
 import { usePath, navigate } from '../../lib/router';
 import { CinematicSplash } from '../common/CinematicSplash';
 import { updateClientSEO, generateWebSiteJsonLd } from '../../lib/seo';
+import { generateWebSiteSchema, generateSearchActionSchema, injectSchema, clearSchema } from '../../lib/schema';
 
 export const AppLayout: React.FC = () => {
   const [collapsed, setCollapsed] = React.useState(false);
@@ -72,6 +73,25 @@ export const AppLayout: React.FC = () => {
   // Reset scrolled state on route changes
   React.useEffect(() => {
     setIsScrolled(false);
+  }, [path]);
+
+  // Schema.org structured data injection for Homepage
+  React.useEffect(() => {
+    if (path === '/') {
+      const websiteSchema = generateWebSiteSchema();
+      const searchActionSchema = generateSearchActionSchema();
+
+      injectSchema(websiteSchema, 'moviyfly-website-schema');
+      injectSchema(searchActionSchema, 'moviyfly-searchaction-schema');
+    } else {
+      clearSchema('moviyfly-website-schema');
+      clearSchema('moviyfly-searchaction-schema');
+    }
+
+    return () => {
+      clearSchema('moviyfly-website-schema');
+      clearSchema('moviyfly-searchaction-schema');
+    };
   }, [path]);
 
   // Synchronize general pages SEO metadata on route change

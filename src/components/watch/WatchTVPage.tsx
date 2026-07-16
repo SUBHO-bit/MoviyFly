@@ -15,6 +15,7 @@ import { navigate } from '../../lib/router';
 import { LocalStorageManager } from './LocalStorageManager';
 import { PlayerController } from './PlayerController';
 import { updateClientSEO } from '../../lib/seo';
+import { generateTVSeriesSchema, generateVideoObjectSchema, injectSchema, clearSchema } from '../../lib/schema';
 
 interface WatchTVPageProps {
   tvId: string;
@@ -135,6 +136,46 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
       });
     }
   }, [tvShow, season, episode, loading]);
+
+  // Schema.org structured data injection for TV watch page
+  React.useEffect(() => {
+    if (!loading && tvShow) {
+      const imageUrl = tvShow.backdrop_path ? `https://image.tmdb.org/t/p/original${tvShow.backdrop_path}` : (tvShow.poster_path ? `https://image.tmdb.org/t/p/w500${tvShow.poster_path}` : '');
+
+      const tvSchema = generateTVSeriesSchema({
+        name: tvShow.name,
+        description: tvShow.overview || `Binge watch ${tvShow.name} seasons and episodes in high definition on MoviyFly.`,
+        poster: imageUrl,
+        firstAirDate: tvShow.first_air_date || '',
+        genres: tvShow.genres ? tvShow.genres.map(g => g.name) : [],
+        numberOfSeasons: tvShow.number_of_seasons || 1,
+        rating: {
+          ratingValue: tvShow.vote_average || 0,
+          ratingCount: tvShow.vote_count || 100,
+        },
+        tmdbId: rawTmdbId,
+        canonicalUrl: `https://moviyfly.vercel.app/tv/${rawTmdbId}`,
+        inLanguage: tvShow.original_language,
+      });
+
+      const videoSchema = generateVideoObjectSchema({
+        name: `Watch ${tvShow.name} Season ${season} Episode ${episode} Online`,
+        description: tvShow.overview || `Watch ${tvShow.name} Season ${season} Episode ${episode} online on MoviyFly.`,
+        thumbnailUrl: imageUrl,
+        embedUrl: typeof window !== 'undefined' ? window.location.href : `https://moviyfly.vercel.app/watch/tv/${rawTmdbId}?season=${season}&episode=${episode}`,
+        uploadDate: tvShow.first_air_date || '',
+        inLanguage: tvShow.original_language,
+      });
+
+      injectSchema(tvSchema, 'moviyfly-watch-tv-schema');
+      injectSchema(videoSchema, 'moviyfly-watch-video-schema');
+    }
+
+    return () => {
+      clearSchema('moviyfly-watch-tv-schema');
+      clearSchema('moviyfly-watch-video-schema');
+    };
+  }, [tvShow, rawTmdbId, season, episode, loading]);
 
   // 2. Synchronize url queries when back/forward navigation occurs
   React.useEffect(() => {

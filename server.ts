@@ -34,25 +34,39 @@ async function startServer() {
 
   // Dynamic robots.txt generator
   app.get(['/robots.txt', '/api/robots'], (req, res) => {
-    const host = req.headers.host || 'localhost:3000';
-    const protocol = req.headers['x-forwarded-proto'] || 'http';
     res.type('text/plain');
-    res.send(`User-agent: *\nAllow: /\n\nSitemap: ${protocol}://${host}/sitemap.xml\n`);
+    res.send(`User-agent: *\nAllow: /\n\nSitemap: https://moviyfly.vercel.app/sitemap.xml\n`);
   });
 
   // Dynamic sitemap.xml generator
   app.get(['/sitemap.xml', '/api/sitemap'], (req, res) => {
-    const host = req.headers.host || 'localhost:3000';
-    const protocol = req.headers['x-forwarded-proto'] || 'http';
     const today = new Date().toISOString().split('T')[0];
     res.type('application/xml');
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>${protocol}://${host}/</loc>
+    <loc>https://moviyfly.vercel.app/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://moviyfly.vercel.app/movies</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://moviyfly.vercel.app/tvshows</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://moviyfly.vercel.app/watchlist</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
   </url>
 </urlset>`);
   });

@@ -45,31 +45,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Dynamic robots.txt generator
-app.get(['/robots.txt', '/api/robots'], (req, res) => {
-  const host = req.headers.host || 'moviyfly.vercel.app';
-  const protocol = req.headers['x-forwarded-proto'] || 'https';
-  res.type('text/plain');
-  res.send(`User-agent: *\nAllow: /\n\nSitemap: ${protocol}://${host}/sitemap.xml\n`);
-});
-
-// Dynamic sitemap.xml generator
-app.get(['/sitemap.xml', '/api/sitemap'], (req, res) => {
-  const host = req.headers.host || 'moviyfly.vercel.app';
-  const protocol = req.headers['x-forwarded-proto'] || 'https';
-  const today = new Date().toISOString().split('T')[0];
-  res.type('application/xml');
-  res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>${protocol}://${host}/</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-</urlset>`);
-});
-
 // TMDB API Proxy and Cache Layer
 app.all('/api/tmdb/*', async (req, res) => {
   const token = process.env.TMDB_READ_ACCESS_TOKEN || process.env.TMDB_ACCESS_TOKEN;
