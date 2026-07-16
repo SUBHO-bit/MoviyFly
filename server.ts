@@ -3,7 +3,7 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import dns from 'dns';
-import { handleMockRequest } from './api/server-mock-data';
+import { handleMockRequest } from './api/server-mock-data.js';
 
 // Set DNS resolution order to favor IPv4 to prevent connection failures in containerized environments
 dns.setDefaultResultOrder('ipv4first');
