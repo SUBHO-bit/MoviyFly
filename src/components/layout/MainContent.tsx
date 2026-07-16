@@ -305,10 +305,10 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
         scifiList,
       ]) => {
         // --- Row 7: ⭐ Popular Movies ---
-        setPopularMovies(mixMovies(bollywoodList, southIndianList, hollywoodList, [...animeList, ...kdramaList], 18));
+        setPopularMovies(mixMovies(bollywoodList, southIndianList, hollywoodList, popularMoviesList, 18));
 
         // --- Row 8: 🏆 Top Rated Movies ---
-        setTopRated(mixMovies(topRatedMoviesList, southIndianList, hollywoodList, animeList, 18));
+        setTopRated(mixMovies(topRatedMoviesList, southIndianList, hollywoodList, popularMoviesList, 18));
 
         // --- Row 9: 🆕 New Releases (Now Playing) ---
         setNewReleases(mixMovies(nowPlayingList, southIndianList, hollywoodList, upcomingList, 18));

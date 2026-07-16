@@ -24,57 +24,57 @@ export interface MockMovie {
 }
 
 const POSTERS = {
-  jawan: 'https://images.unsplash.com/photo-1608889174637-3c44f6326f2a?q=80&w=600',
-  pathaan: 'https://images.unsplash.com/photo-1542204172-e7052809a862?q=80&w=600',
-  animal: 'https://images.unsplash.com/photo-1531259683007-016a7b628fc3?q=80&w=600',
-  rocky: 'https://images.unsplash.com/photo-1601987177651-8edfe6c20009?q=80&w=600',
-  fighter: 'https://images.unsplash.com/photo-1508849789987-4e5333c12b78?q=80&w=600',
-  dunki: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600',
-  '3idiots': 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600',
-  kgf2: 'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=600',
-  rrr: 'https://images.unsplash.com/photo-1533106497176-45ae19e68ba2?q=80&w=600',
-  pushpa: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?q=80&w=600',
-  kantara: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600',
-  manjummel: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600',
-  kalki: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=600',
-  dune2: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=600',
+  jawan: 'https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=600',
+  pathaan: 'https://images.unsplash.com/photo-1502444330042-d1a1ddf9bb5b?q=80&w=600',
+  animal: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=600',
+  rocky: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?q=80&w=600',
+  fighter: 'https://images.unsplash.com/photo-1518364538800-6bcb3f25da49?q=80&w=600',
+  dunki: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=600',
+  '3idiots': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=600',
+  kgf2: 'https://images.unsplash.com/photo-1611244419377-b0a72183b081?q=80&w=600',
+  rrr: 'https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?q=80&w=600',
+  pushpa: 'https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=600',
+  kantara: 'https://images.unsplash.com/photo-1561336313-0bd5e0b27ec8?q=80&w=600',
+  manjummel: 'https://images.unsplash.com/photo-1507163537699-232cf6fe4663?q=80&w=600',
+  kalki: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?q=80&w=600',
+  dune2: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=600',
   oppenheimer: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?q=80&w=600',
   interstellar: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600',
-  bladerunner: 'https://images.unsplash.com/photo-1542204172-e7052809a862?q=80&w=600',
-  darkknight: 'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=600',
-  demonslayer: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=600',
-  aot: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=600',
-  squidgame: 'https://images.unsplash.com/photo-1531259683007-016a7b628fc3?q=80&w=600',
-  cloy: 'https://images.unsplash.com/photo-1601987177651-8edfe6c20009?q=80&w=600',
-  queenoftears: 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?q=80&w=600',
-  shogun: 'https://images.unsplash.com/photo-1533106497176-45ae19e68ba2?q=80&w=600',
+  bladerunner: 'https://images.unsplash.com/photo-1515621061946-eff1c2a352bd?q=80&w=600',
+  darkknight: 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=600',
+  demonslayer: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=600',
+  aot: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=600',
+  squidgame: 'https://images.unsplash.com/photo-1627856013091-fed6e4e30025?q=80&w=600',
+  cloy: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=600',
+  queenoftears: 'https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=600',
+  shogun: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=600',
 };
 
 const BACKDROPS = {
-  jawan: 'https://images.unsplash.com/photo-1608889174637-3c44f6326f2a?q=80&w=1200',
-  pathaan: 'https://images.unsplash.com/photo-1542204172-e7052809a862?q=80&w=1200',
-  animal: 'https://images.unsplash.com/photo-1531259683007-016a7b628fc3?q=80&w=1200',
-  rocky: 'https://images.unsplash.com/photo-1601987177651-8edfe6c20009?q=80&w=1200',
-  fighter: 'https://images.unsplash.com/photo-1508849789987-4e5333c12b78?q=80&w=1200',
-  dunki: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1200',
-  '3idiots': 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200',
-  kgf2: 'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=1200',
-  rrr: 'https://images.unsplash.com/photo-1533106497176-45ae19e68ba2?q=80&w=1200',
-  pushpa: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?q=80&w=1200',
-  kantara: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1200',
-  manjummel: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200',
-  kalki: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1200',
-  dune2: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1200',
+  jawan: 'https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=1200',
+  pathaan: 'https://images.unsplash.com/photo-1502444330042-d1a1ddf9bb5b?q=80&w=1200',
+  animal: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=1200',
+  rocky: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?q=80&w=1200',
+  fighter: 'https://images.unsplash.com/photo-1518364538800-6bcb3f25da49?q=80&w=1200',
+  dunki: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=1200',
+  '3idiots': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1200',
+  kgf2: 'https://images.unsplash.com/photo-1611244419377-b0a72183b081?q=80&w=1200',
+  rrr: 'https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?q=80&w=1200',
+  pushpa: 'https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=1200',
+  kantara: 'https://images.unsplash.com/photo-1561336313-0bd5e0b27ec8?q=80&w=1200',
+  manjummel: 'https://images.unsplash.com/photo-1507163537699-232cf6fe4663?q=80&w=1200',
+  kalki: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?q=80&w=1200',
+  dune2: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=1200',
   oppenheimer: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?q=80&w=1200',
   interstellar: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200',
-  bladerunner: 'https://images.unsplash.com/photo-1542204172-e7052809a862?q=80&w=1200',
-  darkknight: 'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=1200',
-  demonslayer: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=1200',
-  aot: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1200',
-  squidgame: 'https://images.unsplash.com/photo-1531259683007-016a7b628fc3?q=80&w=1200',
-  cloy: 'https://images.unsplash.com/photo-1601987177651-8edfe6c20009?q=80&w=1200',
-  queenoftears: 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?q=80&w=1200',
-  shogun: 'https://images.unsplash.com/photo-1533106497176-45ae19e68ba2?q=80&w=1200',
+  bladerunner: 'https://images.unsplash.com/photo-1515621061946-eff1c2a352bd?q=80&w=1200',
+  darkknight: 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=1200',
+  demonslayer: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1200',
+  aot: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1200',
+  squidgame: 'https://images.unsplash.com/photo-1627856013091-fed6e4e30025?q=80&w=1200',
+  cloy: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=1200',
+  queenoftears: 'https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=1200',
+  shogun: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1200',
 };
 
 const MOCK_MOVIES: MockMovie[] = [
@@ -674,8 +674,19 @@ export function handleMockRequest(targetPath: string, query: Record<string, stri
   // 10. SEARCH
   if (targetPath.startsWith('search/')) {
     const searchTerm = String(query.query || '').trim().toLowerCase();
-    const isTv = targetPath.endsWith('tv');
-    const sourceList = isTv ? MOCK_TV : MOCK_MOVIES;
+    
+    let sourceList: any[] = [];
+    if (targetPath.endsWith('tv')) {
+      sourceList = MOCK_TV.map(item => ({ ...item, media_type: 'tv' }));
+    } else if (targetPath.endsWith('movie')) {
+      sourceList = MOCK_MOVIES.map(item => ({ ...item, media_type: 'movie' }));
+    } else {
+      // Default / search/multi
+      sourceList = [
+        ...MOCK_MOVIES.map(item => ({ ...item, media_type: 'movie' })),
+        ...MOCK_TV.map(item => ({ ...item, media_type: 'tv' }))
+      ];
+    }
 
     if (!searchTerm) {
       return { page: 1, results: sourceList, total_pages: 1, total_results: sourceList.length };
