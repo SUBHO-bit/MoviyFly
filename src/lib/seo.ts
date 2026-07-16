@@ -6,6 +6,7 @@ export interface SEOMetadata {
   image?: string;
   type?: string;
   url?: string;
+  jsonLd?: any;
 }
 
 export function updateClientSEO(metadata: SEOMetadata) {
@@ -79,4 +80,28 @@ export function updateClientSEO(metadata: SEOMetadata) {
   if (metadata.image) {
     setTwitterMeta('twitter:image', metadata.image);
   }
+
+  // 7. Update JSON-LD Structured Data
+  let jsonLdScript = document.getElementById('moviyfly-jsonld') as HTMLScriptElement | null;
+  if (!jsonLdScript) {
+    jsonLdScript = document.createElement('script');
+    jsonLdScript.id = 'moviyfly-jsonld';
+    jsonLdScript.type = 'application/ld+json';
+    document.head.appendChild(jsonLdScript);
+  }
+
+  const targetJsonLd = metadata.jsonLd || {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "MoviyFly",
+    "url": "https://moviyfly1.onrender.com/",
+    "description": "Watch trending movies and TV shows online on MoviyFly.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://moviyfly1.onrender.com/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
+  jsonLdScript.textContent = JSON.stringify(targetJsonLd, null, 2);
 }

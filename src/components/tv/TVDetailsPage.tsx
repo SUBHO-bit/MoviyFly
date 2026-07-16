@@ -49,12 +49,29 @@ export const TVDetailsPage: React.FC<TVDetailsPageProps> = ({
 
   React.useEffect(() => {
     if (mediaItem) {
+      const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "TVSeries",
+        "name": mediaItem.title,
+        "description": mediaItem.overview || `Stream ${mediaItem.title} on MoviyFly.`,
+        "image": mediaItem.poster || mediaItem.backdrop || "",
+        "dateCreated": mediaItem.releaseDate || "",
+        "genre": mediaItem.genres ? mediaItem.genres.map(g => g.name) : [],
+        "aggregateRating": mediaItem.rating ? {
+          "@type": "AggregateRating",
+          "ratingValue": mediaItem.rating,
+          "bestRating": "10",
+          "worstRating": "1"
+        } : undefined
+      };
+
       updateClientSEO({
         title: `${mediaItem.title} - Stream TV Show on MoviyFly`,
         description: mediaItem.overview || `Binge watch ${mediaItem.title} seasons and episodes in high definition on MoviyFly.`,
         image: mediaItem.backdrop || mediaItem.poster,
         type: 'video.tv_show',
-        url: window.location.href
+        url: window.location.href,
+        jsonLd: jsonLd
       });
     }
   }, [mediaItem]);

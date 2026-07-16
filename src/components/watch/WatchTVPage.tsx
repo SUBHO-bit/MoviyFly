@@ -105,12 +105,30 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
 
   React.useEffect(() => {
     if (tvShow) {
+      const image = tvShow.backdrop_path ? `https://image.tmdb.org/t/p/original${tvShow.backdrop_path}` : (tvShow.poster_path ? `https://image.tmdb.org/t/p/w500${tvShow.poster_path}` : undefined);
+      const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "TVEpisode",
+        "name": `Season ${season} Episode ${episode} - ${tvShow.name}`,
+        "description": `Stream Season ${season} Episode ${episode} of ${tvShow.name} in HD quality on MoviyFly.`,
+        "image": image || "",
+        "partOfTVSeries": {
+          "@type": "TVSeries",
+          "name": tvShow.name
+        },
+        "potentialAction": {
+          "@type": "WatchAction",
+          "target": window.location.href
+        }
+      };
+
       updateClientSEO({
         title: `Watch ${tvShow.name} Season ${season} Episode ${episode} - Stream on MoviyFly`,
         description: `Stream ${tvShow.name} Season ${season} Episode ${episode} in HD quality with fast streaming servers. ${tvShow.overview || ''}`,
-        image: tvShow.backdrop_path ? `https://image.tmdb.org/t/p/original${tvShow.backdrop_path}` : (tvShow.poster_path ? `https://image.tmdb.org/t/p/w500${tvShow.poster_path}` : undefined),
+        image: image,
         type: 'video.tv_show',
-        url: window.location.href
+        url: window.location.href,
+        jsonLd: jsonLd
       });
     }
   }, [tvShow, season, episode]);

@@ -65,12 +65,27 @@ export const WatchPage: React.FC<WatchPageProps> = ({
 
   React.useEffect(() => {
     if (movie) {
+      const image = movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : undefined);
+      const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "Movie",
+        "name": movie.title,
+        "description": movie.overview || `Watch ${movie.title} in HD quality on MoviyFly.`,
+        "image": image || "",
+        "dateCreated": movie.release_date || "",
+        "potentialAction": {
+          "@type": "WatchAction",
+          "target": window.location.href
+        }
+      };
+
       updateClientSEO({
         title: `Watch ${movie.title} - High Quality Stream on MoviyFly`,
         description: `Stream ${movie.title} full movie in premium HD quality. ${movie.overview || ''}`,
-        image: movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : undefined),
+        image: image,
         type: 'video.movie',
-        url: window.location.href
+        url: window.location.href,
+        jsonLd: jsonLd
       });
     }
   }, [movie]);

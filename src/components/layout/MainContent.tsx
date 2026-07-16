@@ -972,37 +972,27 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
 
               {/* Title */}
               <h1 className="text-h2 font-extrabold text-white tracking-tight">
-                MoviyFly Streaming Shell
+                Page Not Found
               </h1>
 
               {/* Content category info */}
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/5 text-text-secondary text-caption font-bold rounded-sm uppercase tracking-wider mt-3">
-                <span>Category:</span>
-                <span className="text-primary font-extrabold">{pageTitle}</span>
+                <span>Path:</span>
+                <span className="text-primary font-extrabold">{window.location.pathname}</span>
               </div>
 
               {/* Core placeholder text */}
               <p className="text-small text-text-secondary leading-relaxed mt-6">
-                "Live dynamic content loading from TMDB is currently active on the home view."
+                The cinematic content you are looking for does not exist or has been moved.
               </p>
 
-              <p className="text-caption text-text-muted mt-3 max-w-sm mx-auto">
-                Category views, search flows, and movie detail dashboards will connect to the same TMDB service layers next.
-              </p>
-
-              {/* Bullet indicators to list functional layout attributes */}
-              <div className="grid grid-cols-2 gap-3 mt-8 pt-6 border-t border-white/5 text-left">
-                {[
-                  'Premium Glass Sidebar',
-                  'Collapsible Tray States',
-                  'Integrated Notification Drops',
-                  'Fully Responsive Layouts',
-                ].map((feature, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    <span className="text-[11px] font-bold text-text-secondary truncate">{feature}</span>
-                  </div>
-                ))}
+              <div className="mt-8 pt-6 border-t border-white/5 flex justify-center">
+                <button
+                  onClick={() => navigate('/home')}
+                  className="py-2.5 px-6 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-bold text-xs hover:opacity-90 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-purple-glow"
+                >
+                  Return to Home Cinema
+                </button>
               </div>
             </motion.div>
           </Container>

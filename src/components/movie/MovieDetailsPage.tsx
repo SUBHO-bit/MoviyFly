@@ -58,12 +58,30 @@ export const MovieDetailsPage: React.FC<MovieDetailsPageProps> = ({
 
   React.useEffect(() => {
     if (mediaItem) {
+      const type = isTv ? 'video.tv_show' : 'video.movie';
+      const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": isTv ? "TVSeries" : "Movie",
+        "name": mediaItem.title,
+        "description": mediaItem.overview || `Stream ${mediaItem.title} on MoviyFly.`,
+        "image": mediaItem.poster || mediaItem.backdrop || "",
+        "dateCreated": mediaItem.releaseDate || "",
+        "genre": mediaItem.genres ? mediaItem.genres.map(g => g.name) : [],
+        "aggregateRating": mediaItem.rating ? {
+          "@type": "AggregateRating",
+          "ratingValue": mediaItem.rating,
+          "bestRating": "10",
+          "worstRating": "1"
+        } : undefined
+      };
+
       updateClientSEO({
         title: `${mediaItem.title} - Stream on MoviyFly`,
         description: mediaItem.overview || `Stream ${mediaItem.title} on MoviyFly with high-quality sources and complete details.`,
         image: mediaItem.backdrop || mediaItem.poster,
-        type: isTv ? 'video.tv_show' : 'video.movie',
-        url: window.location.href
+        type: type,
+        url: window.location.href,
+        jsonLd: jsonLd
       });
     }
   }, [mediaItem, isTv]);

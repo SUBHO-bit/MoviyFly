@@ -103,11 +103,31 @@ export const AppLayout: React.FC = () => {
       seoDesc = `Explore the best of ${categoryName} movies and TV series curated specially for you on MoviyFly.`;
     }
 
+    const currentUrl = `https://moviyfly1.onrender.com${path}`;
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": seoTitle,
+      "description": seoDesc,
+      "url": currentUrl,
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "MoviyFly",
+        "url": "https://moviyfly1.onrender.com/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://moviyfly1.onrender.com/search?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    };
+
     updateClientSEO({
       title: seoTitle,
       description: seoDesc,
       type: 'website',
-      url: `https://moviyfly1.onrender.com${path}`
+      url: currentUrl,
+      jsonLd: jsonLd
     });
   }, [activeItem, path]);
 
