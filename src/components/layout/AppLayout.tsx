@@ -10,17 +10,23 @@ export const AppLayout: React.FC = () => {
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState('');
-  const [showIntro, setShowIntro] = React.useState(false);
+  const isGoogleBot =
+  typeof navigator !== 'undefined' &&
+  /Googlebot|Google-InspectionTool/i.test(navigator.userAgent);
+
+const [showIntro, setShowIntro] = React.useState(!isGoogleBot);
   
   const path = usePath();
 
   // Check if intro has been seen in this session
   React.useEffect(() => {
-    const introSeen = sessionStorage.getItem('moviyfly_intro_seen');
-    if (!introSeen) {
-      setShowIntro(true);
-    }
-  }, []);
+  if (isGoogleBot) return;
+
+  const introSeen = sessionStorage.getItem('moviyfly_intro_seen');
+  if (!introSeen) {
+    setShowIntro(true);
+  }
+}, [isGoogleBot]);
 
   // Sync search input value with URL search query parameter on back/forward or direct load
   React.useEffect(() => {
