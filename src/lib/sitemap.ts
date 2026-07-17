@@ -95,30 +95,25 @@ export function slugify(text: string): string {
 }
 
 /**
- * Computes a clean movie slug.
- * Fallback patterns: slug -> id-title -> id
+ * Computes a clean movie slug matching the application's exact routing format.
  */
 export function getMovieSlug(item: DynamicMediaItem): string {
-  if (item.slug) return item.slug;
-  if (item.title) {
-    const slugified = slugify(item.title);
-    return slugified ? `${item.id}-${slugified}` : String(item.id);
+  const idStr = String(item.id);
+  if (idStr.startsWith('movie-')) {
+    return idStr;
   }
-  return String(item.id);
+  return `movie-${idStr}`;
 }
 
 /**
- * Computes a clean TV show slug.
- * Fallback patterns: slug -> id-name -> id
+ * Computes a clean TV show slug matching the application's exact routing format.
  */
 export function getTVSlug(item: DynamicMediaItem): string {
-  if (item.slug) return item.slug;
-  const displayName = item.name || item.title;
-  if (displayName) {
-    const slugified = slugify(displayName);
-    return slugified ? `${item.id}-${slugified}` : String(item.id);
+  const idStr = String(item.id);
+  if (idStr.startsWith('tv-')) {
+    return idStr;
   }
-  return String(item.id);
+  return `tv-${idStr}`;
 }
 
 /**
@@ -158,23 +153,156 @@ export function generateTVSitemapEntry(
 /**
  * High-fidelity, dynamic sample dataset representing TMDB-powered Movie/TV records.
  */
-export const SAMPLE_MOVIES: DynamicMediaItem[] = [
-  { id: 1001, title: 'Jawan', lastmod: '2023-09-07' },
-  { id: 1002, title: 'Pathaan', lastmod: '2023-01-25' },
-  { id: 1003, title: 'Animal', lastmod: '2023-12-01' },
-  { id: 1014, title: 'Dune Part Two', lastmod: '2024-03-01' },
-  { id: 1015, title: 'Oppenheimer', lastmod: '2023-07-21' },
-];
+export const SAMPLE_MOVIES: DynamicMediaItem[] = [];
 
-export const SAMPLE_TVS: DynamicMediaItem[] = [
-  { id: 1019, name: 'Squid Game', lastmod: '2021-09-17' },
-  { id: 1020, name: 'Crash Landing on You', lastmod: '2019-12-14' },
-  { id: 1021, name: 'Shogun', lastmod: '2024-02-27' },
-];
+export const SAMPLE_TVS: DynamicMediaItem[] = [];
+
+/**
+ * Splits an array into exactly N contiguous chunks.
+ * Always returns exactly numChunks arrays (padded with empty arrays if needed).
+ */
+export function splitIntoContiguousChunks<T>(arr: T[], numChunks: number): T[][] {
+  const chunks: T[][] = [];
+  const size = Math.ceil(arr.length / numChunks);
+  for (let i = 0; i < numChunks; i++) {
+    const start = i * size;
+    const end = Math.min(start + size, arr.length);
+    if (start < arr.length) {
+      chunks.push(arr.slice(start, end));
+    } else {
+      chunks.push([]);
+    }
+  }
+  while (chunks.length < numChunks) {
+    chunks.push([]);
+  }
+  return chunks;
+}
+
+/**
+ * Fetch and construct Movie DynamicMediaItem array from multiple TMDB endpoints.
+ */
+export async function fetchMoviesFromTMDB(baseUrl: string): Promise<DynamicMediaItem[]> {
+  const endpoints = [
+    '/movie/popular',
+    '/movie/top_rated',
+    '/movie/now_playing',
+    '/movie/upcoming',
+    '/trending/movie/week'
+  ];
+
+  const allMovies: DynamicMediaItem[] = [];
+
+  try {
+    const promises = endpoints.map(endpoint => 
+      fetch(`${baseUrl}/api/tmdb${endpoint}`)
+        .then(res => {
+          if (!res.ok) {
+            console.error(`Sitemap TMDB Fetch Error for ${endpoint}: Status ${res.status}`);
+            return null;
+          }
+          return res.json();
+        })
+        .catch(err => {
+          console.error(`Sitemap TMDB Fetch Exception for ${endpoint}:`, err);
+          return null;
+        })
+    );
+
+    const results = await Promise.all(promises);
+
+    for (const data of results) {
+      if (data && Array.isArray(data.results)) {
+        for (const movie of data.results) {
+          if (movie && movie.id) {
+            allMovies.push({
+              id: movie.id,
+              title: movie.title || movie.original_title || 'Untitled Movie',
+              lastmod: movie.release_date || formatSitemapDate(),
+            });
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch movies from TMDB for sitemap:', err);
+  }
+
+  // Remove duplicate IDs
+  const seenIds = new Set<string | number>();
+  const uniqueMovies: DynamicMediaItem[] = [];
+  for (const movie of allMovies) {
+    if (!seenIds.has(movie.id)) {
+      seenIds.add(movie.id);
+      uniqueMovies.push(movie);
+    }
+  }
+
+  return uniqueMovies;
+}
+
+/**
+ * Fetch and construct TV DynamicMediaItem array from multiple TMDB endpoints.
+ */
+export async function fetchTVsFromTMDB(baseUrl: string): Promise<DynamicMediaItem[]> {
+  const endpoints = [
+    '/tv/popular',
+    '/tv/top_rated',
+    '/trending/tv/week'
+  ];
+
+  const allTVs: DynamicMediaItem[] = [];
+
+  try {
+    const promises = endpoints.map(endpoint => 
+      fetch(`${baseUrl}/api/tmdb${endpoint}`)
+        .then(res => {
+          if (!res.ok) {
+            console.error(`Sitemap TMDB Fetch Error for ${endpoint}: Status ${res.status}`);
+            return null;
+          }
+          return res.json();
+        })
+        .catch(err => {
+          console.error(`Sitemap TMDB Fetch Exception for ${endpoint}:`, err);
+          return null;
+        })
+    );
+
+    const results = await Promise.all(promises);
+
+    for (const data of results) {
+      if (data && Array.isArray(data.results)) {
+        for (const tv of data.results) {
+          if (tv && tv.id) {
+            allTVs.push({
+              id: tv.id,
+              name: tv.name || tv.original_name || 'Untitled TV Show',
+              lastmod: tv.first_air_date || formatSitemapDate(),
+            });
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch TV shows from TMDB for sitemap:', err);
+  }
+
+  // Remove duplicate IDs
+  const seenIds = new Set<string | number>();
+  const uniqueTVs: DynamicMediaItem[] = [];
+  for (const tv of allTVs) {
+    if (!seenIds.has(tv.id)) {
+      seenIds.add(tv.id);
+      uniqueTVs.push(tv);
+    }
+  }
+
+  return uniqueTVs;
+}
 
 /**
  * Reusable paginator helper to split entries dynamically.
- * Enables handling hundreds of thousands of dynamic records without memory issues.
  */
 export function paginateEntries<T>(items: T[], page: number, pageSize: number = 1000): T[] {
   const startIndex = (page - 1) * pageSize;
@@ -211,50 +339,32 @@ export interface SitemapRegistry {
 
 /**
  * High-performance, production-ready sitemap registry generator.
- * Automatically chunks dynamic URLs to comply with Google's 50,000 limit per file.
+ * Automatically splits dynamic URLs into exactly 2 pages for movies and 2 pages for TV shows.
  */
 export function generateSitemapRegistry(
   movies: DynamicMediaItem[],
   tvs: DynamicMediaItem[],
-  options?: SitemapGeneratorOptions & { 
-    maxUrlLimit?: number;
-    movieLimit?: number;
-    tvLimit?: number;
-  }
+  options?: SitemapGeneratorOptions
 ): SitemapRegistry {
   const baseUrl = options?.baseUrl || DEFAULT_BASE_URL;
-  const maxUrlLimit = options?.maxUrlLimit || 50000; // Standard Google limits
-  const movieLimit = options?.movieLimit || maxUrlLimit;
-  const tvLimit = options?.tvLimit || maxUrlLimit;
 
   // 1. Static Core Sitemap
   const coreEntries = getCoreRoutes(options);
 
-  // 2. Partition movies into chunks
-  const movieChunks: DynamicMediaItem[][] = [];
-  for (let i = 0; i < movies.length; i += movieLimit) {
-    movieChunks.push(movies.slice(i, i + movieLimit));
-  }
+  // 2. Partition movies into exactly 2 chunks to keep movies-1.xml and movies-2.xml constant
+  const movieChunks = splitIntoContiguousChunks(movies, 2);
 
-  // 3. Partition TV Shows into chunks
-  const tvChunks: DynamicMediaItem[][] = [];
-  for (let i = 0; i < tvs.length; i += tvLimit) {
-    tvChunks.push(tvs.slice(i, i + tvLimit));
-  }
+  // 3. Partition TV Shows into exactly 2 chunks to keep tv-1.xml and tv-2.xml constant
+  const tvChunks = splitIntoContiguousChunks(tvs, 2);
 
-  // Build the list of sub-sitemaps
-  const indexUrls: string[] = [`${baseUrl}/sitemaps/static.xml`];
-  
-  // Even if list is empty, we must keep at least page 1 for structure
-  const totalMoviePages = Math.max(1, movieChunks.length);
-  for (let page = 1; page <= totalMoviePages; page++) {
-    indexUrls.push(`${baseUrl}/sitemaps/movies-${page}.xml`);
-  }
-
-  const totalTvPages = Math.max(1, tvChunks.length);
-  for (let page = 1; page <= totalTvPages; page++) {
-    indexUrls.push(`${baseUrl}/sitemaps/tv-${page}.xml`);
-  }
+  // Build the list of sub-sitemaps (retains exactly the 5 static sitemaps requested)
+  const indexUrls: string[] = [
+    `${baseUrl}/sitemaps/static.xml`,
+    `${baseUrl}/sitemaps/movies-1.xml`,
+    `${baseUrl}/sitemaps/movies-2.xml`,
+    `${baseUrl}/sitemaps/tv-1.xml`,
+    `${baseUrl}/sitemaps/tv-2.xml`
+  ];
 
   return {
     index: indexUrls,

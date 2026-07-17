@@ -4,7 +4,7 @@ import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import dns from 'dns';
 import { handleMockRequest } from './api/server-mock-data.js';
-import { generateSitemapRegistry, generateSitemapIndexXml, SAMPLE_MOVIES, SAMPLE_TVS } from './src/lib/sitemap.js';
+import { generateSitemapRegistry, generateSitemapIndexXml, fetchMoviesFromTMDB, fetchTVsFromTMDB } from './src/lib/sitemap.js';
 
 // Set DNS resolution order to favor IPv4 to prevent connection failures in containerized environments
 dns.setDefaultResultOrder('ipv4first');
@@ -41,13 +41,19 @@ async function startServer() {
   });
 
   // Dynamic sitemap.xml generator
-  app.get(['/sitemap.xml', '/api/sitemap'], (req, res) => {
+  app.get(['/sitemap.xml', '/api/sitemap'], async (req, res) => {
     try {
+      const host = req.headers.host || 'localhost:3000';
+      const protocol = req.secure ? 'https' : 'http';
+      const baseUrl = `${protocol}://${host}`;
+
+      const [movies, tvs] = await Promise.all([
+        fetchMoviesFromTMDB(baseUrl),
+        fetchTVsFromTMDB(baseUrl)
+      ]);
+
       const sub = req.query.sub as string;
-      const registry = generateSitemapRegistry(SAMPLE_MOVIES, SAMPLE_TVS, {
-        movieLimit: 3,
-        tvLimit: 2,
-      });
+      const registry = generateSitemapRegistry(movies, tvs, { baseUrl });
 
       res.set('Cache-Control', 'public, max-age=43200, s-maxage=43200'); // Cache for 12 hours
 
@@ -74,13 +80,19 @@ async function startServer() {
   });
 
   // Dedicated route for /sitemaps/:filename
-  app.get('/sitemaps/:filename', (req, res) => {
+  app.get('/sitemaps/:filename', async (req, res) => {
     try {
+      const host = req.headers.host || 'localhost:3000';
+      const protocol = req.secure ? 'https' : 'http';
+      const baseUrl = `${protocol}://${host}`;
+
+      const [movies, tvs] = await Promise.all([
+        fetchMoviesFromTMDB(baseUrl),
+        fetchTVsFromTMDB(baseUrl)
+      ]);
+
       const filename = req.params.filename;
-      const registry = generateSitemapRegistry(SAMPLE_MOVIES, SAMPLE_TVS, {
-        movieLimit: 3,
-        tvLimit: 2,
-      });
+      const registry = generateSitemapRegistry(movies, tvs, { baseUrl });
 
       res.set('Cache-Control', 'public, max-age=43200, s-maxage=43200'); // Cache for 12 hours
 
