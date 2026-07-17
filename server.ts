@@ -4,6 +4,7 @@ import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import dns from 'dns';
 import { handleMockRequest } from './api/server-mock-data.js';
+import { generateSitemapRegistry, generateSitemapIndexXml, SAMPLE_MOVIES, SAMPLE_TVS } from './src/lib/sitemap.js';
 
 // Set DNS resolution order to favor IPv4 to prevent connection failures in containerized environments
 dns.setDefaultResultOrder('ipv4first');
@@ -40,35 +41,55 @@ async function startServer() {
 
   // Dynamic sitemap.xml generator
   app.get(['/sitemap.xml', '/api/sitemap'], (req, res) => {
-    const today = new Date().toISOString().split('T')[0];
-    res.type('application/xml');
-    res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://moviyfly.vercel.app/</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://moviyfly.vercel.app/movies</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://moviyfly.vercel.app/tvshows</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://moviyfly.vercel.app/watchlist</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-</urlset>`);
+    try {
+      const sub = req.query.sub as string;
+      const registry = generateSitemapRegistry(SAMPLE_MOVIES, SAMPLE_TVS, {
+        movieLimit: 3,
+        tvLimit: 2,
+      });
+
+      if (sub) {
+        const filename = sub.endsWith('.xml') ? sub : `${sub}.xml`;
+        const content = registry.getSitemapContent(filename);
+        if (content) {
+          res.type('application/xml');
+          res.send(content);
+          return;
+        } else {
+          res.status(404).send('Sitemap not found');
+          return;
+        }
+      }
+
+      const indexXml = generateSitemapIndexXml(registry.index);
+      res.type('application/xml');
+      res.send(indexXml);
+    } catch (err: any) {
+      console.error('Error generating sitemap:', err);
+      res.status(500).send('Internal Server Error');
+    }
+  });
+
+  // Dedicated route for /sitemaps/:filename
+  app.get('/sitemaps/:filename', (req, res) => {
+    try {
+      const filename = req.params.filename;
+      const registry = generateSitemapRegistry(SAMPLE_MOVIES, SAMPLE_TVS, {
+        movieLimit: 3,
+        tvLimit: 2,
+      });
+
+      const content = registry.getSitemapContent(filename);
+      if (content) {
+        res.type('application/xml');
+        res.send(content);
+      } else {
+        res.status(404).send('Sitemap not found');
+      }
+    } catch (err: any) {
+      console.error('Error serving sub sitemap:', err);
+      res.status(500).send('Internal Server Error');
+    }
   });
 
   // Helper function to check if an ID is one of our defined mock IDs

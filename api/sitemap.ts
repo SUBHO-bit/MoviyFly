@@ -1,36 +1,44 @@
 import type { IncomingMessage, ServerResponse } from 'http';
+import { 
+  generateSitemapRegistry, 
+  generateSitemapIndexXml, 
+  SAMPLE_MOVIES, 
+  SAMPLE_TVS 
+} from '../src/lib/sitemap.js';
 
 export default function handler(req: IncomingMessage, res: ServerResponse) {
-  const today = new Date().toISOString().split('T')[0];
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://moviyfly.vercel.app/</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://moviyfly.vercel.app/movies</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://moviyfly.vercel.app/tvshows</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://moviyfly.vercel.app/watchlist</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-</urlset>`;
+  try {
+    const urlObj = new URL(req.url || '', 'https://moviyfly.vercel.app');
+    const sub = urlObj.searchParams.get('sub');
 
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-  res.end(sitemap);
+    const registry = generateSitemapRegistry(SAMPLE_MOVIES, SAMPLE_TVS, {
+      movieLimit: 3,
+      tvLimit: 2,
+    });
+
+    if (sub) {
+      const filename = sub.endsWith('.xml') ? sub : `${sub}.xml`;
+      const content = registry.getSitemapContent(filename);
+      if (content) {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+        res.end(content);
+        return;
+      } else {
+        res.statusCode = 404;
+        res.setHeader('Content-Type', 'text/plain');
+        res.end('Sitemap not found');
+        return;
+      }
+    }
+
+    const indexXml = generateSitemapIndexXml(registry.index);
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.end(indexXml);
+  } catch (err: any) {
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'text/plain');
+    res.end('Internal Server Error');
+  }
 }
