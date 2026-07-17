@@ -224,7 +224,7 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
       title: tvShow.name,
       overview: tvShow.overview,
       genres: tvShow.genres ? tvShow.genres.map((g) => g.name) : [],
-      rating: tvShow.vote_average ? tvShow.vote_average.toFixed(1) : '0.0',
+      rating: (typeof tvShow.vote_average === 'number' && Number.isFinite(tvShow.vote_average)) ? tvShow.vote_average.toFixed(1) : '0.0',
       year: startYear,
       runtime: seasonsLabel,
       language: tvShow.original_language?.toUpperCase() || 'EN',

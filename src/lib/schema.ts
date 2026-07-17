@@ -119,32 +119,48 @@ export function generateSearchActionSchema(params?: SearchActionSchemaParams) {
 }
 
 /**
+ * Safely parses rating to AggregateRating schema type, or returns undefined if rating is invalid.
+ */
+export function parseRating(ratingInput: any): any {
+  if (ratingInput === undefined || ratingInput === null) return undefined;
+
+  let rawValue: any;
+  let ratingCount = 100;
+
+  if (typeof ratingInput === 'number') {
+    rawValue = ratingInput;
+  } else if (typeof ratingInput === 'object') {
+    rawValue = ratingInput.ratingValue;
+    if (ratingInput.ratingCount !== undefined && ratingInput.ratingCount !== null) {
+      const parsedCount = Number(ratingInput.ratingCount);
+      if (Number.isFinite(parsedCount)) {
+        ratingCount = parsedCount;
+      }
+    }
+  } else {
+    rawValue = ratingInput;
+  }
+
+  const numericValue = typeof rawValue === 'number' ? rawValue : Number(rawValue);
+
+  if (Number.isFinite(numericValue) && numericValue > 0) {
+    return {
+      '@type': 'AggregateRating',
+      'ratingValue': numericValue.toFixed(1),
+      'bestRating': '10',
+      'worstRating': '1',
+      'ratingCount': ratingCount,
+    };
+  }
+
+  return undefined;
+}
+
+/**
  * 3. Movie Schema Generator
  */
 export function generateMovieSchema(params: MovieSchemaParams) {
-  let ratingObj: any = undefined;
-  if (params.rating !== undefined) {
-    if (typeof params.rating === 'number') {
-      if (params.rating > 0) {
-        ratingObj = {
-          '@type': 'AggregateRating',
-          'ratingValue': params.rating.toFixed(1),
-          'bestRating': '10',
-          'worstRating': '1',
-          'ratingCount': 100,
-        };
-      }
-    } else {
-      ratingObj = {
-        '@type': 'AggregateRating',
-        'ratingValue': params.rating.ratingValue.toFixed(1),
-        'bestRating': '10',
-        'worstRating': '1',
-        'ratingCount': params.rating.ratingCount || 100,
-      };
-    }
-  }
-
+  const ratingObj = parseRating(params.rating);
   const duration = parseDurationToISO(params.runtime);
 
   return {
@@ -176,28 +192,7 @@ export function generateMovieSchema(params: MovieSchemaParams) {
  * 4. TVSeries Schema Generator
  */
 export function generateTVSeriesSchema(params: TVSeriesSchemaParams) {
-  let ratingObj: any = undefined;
-  if (params.rating !== undefined) {
-    if (typeof params.rating === 'number') {
-      if (params.rating > 0) {
-        ratingObj = {
-          '@type': 'AggregateRating',
-          'ratingValue': params.rating.toFixed(1),
-          'bestRating': '10',
-          'worstRating': '1',
-          'ratingCount': 100,
-        };
-      }
-    } else {
-      ratingObj = {
-        '@type': 'AggregateRating',
-        'ratingValue': params.rating.ratingValue.toFixed(1),
-        'bestRating': '10',
-        'worstRating': '1',
-        'ratingCount': params.rating.ratingCount || 100,
-      };
-    }
-  }
+  const ratingObj = parseRating(params.rating);
 
   return {
     '@context': 'https://schema.org',
