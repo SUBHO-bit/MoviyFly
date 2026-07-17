@@ -27,7 +27,7 @@ export const TVDetailsPage: React.FC<TVDetailsPageProps> = ({
   const [error, setError] = React.useState<string | null>(null);
 
   // Strip prefix "tv-" if present to get the raw TMDB ID
-  const rawTmdbId = tvId.replace('tv-', '');
+  const rawTmdbId = tvId.replace('tv-', '').split('-')[0];
 
   const fetchDetails = React.useCallback(async () => {
     setLoading(true);
@@ -79,12 +79,15 @@ export const TVDetailsPage: React.FC<TVDetailsPageProps> = ({
         },
       ]);
 
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://moviyfly.vercel.app';
+      const cleanUrl = `${origin}/tv/${tvId}`;
+
       updateClientSEO({
         title: `${mediaItem.title} - Stream TV Show on MoviyFly`,
         description: mediaItem.overview || `Binge watch ${mediaItem.title} seasons and episodes in high definition on MoviyFly.`,
         image: mediaItem.backdrop || mediaItem.poster,
         type: 'video.tv_show',
-        url: window.location.href,
+        url: cleanUrl,
         jsonLd: jsonLd,
         breadcrumbsLd: breadcrumbsLd,
       });

@@ -36,6 +36,7 @@ async function startServer() {
   // Dynamic robots.txt generator
   app.get(['/robots.txt', '/api/robots'], (req, res) => {
     res.type('text/plain');
+    res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
     res.send(`User-agent: *\nAllow: /\n\nSitemap: https://moviyfly.vercel.app/sitemap.xml\n`);
   });
 
@@ -47,6 +48,8 @@ async function startServer() {
         movieLimit: 3,
         tvLimit: 2,
       });
+
+      res.set('Cache-Control', 'public, max-age=43200, s-maxage=43200'); // Cache for 12 hours
 
       if (sub) {
         const filename = sub.endsWith('.xml') ? sub : `${sub}.xml`;
@@ -78,6 +81,8 @@ async function startServer() {
         movieLimit: 3,
         tvLimit: 2,
       });
+
+      res.set('Cache-Control', 'public, max-age=43200, s-maxage=43200'); // Cache for 12 hours
 
       const content = registry.getSitemapContent(filename);
       if (content) {

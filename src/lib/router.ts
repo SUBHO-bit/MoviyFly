@@ -22,6 +22,34 @@ export function usePath(): string {
   return path;
 }
 
+export interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  to: string;
+}
+
+export const Link: React.FC<LinkProps> = ({ to, children, onClick, ...props }) => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Let browser handle new tab/window keys
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) {
+      return;
+    }
+    e.preventDefault();
+    navigate(to);
+    if (onClick) {
+      onClick(e);
+    }
+  };
+
+  return React.createElement(
+    'a',
+    {
+      ...props,
+      href: to,
+      onClick: handleClick,
+    },
+    children
+  );
+};
+
 export function getMovieIdFromPath(path: string): string | null {
   if (path.startsWith('/movie/')) {
     const id = path.substring(7);

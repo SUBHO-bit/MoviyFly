@@ -8,6 +8,7 @@ import {
 
 export default function handler(req: IncomingMessage, res: ServerResponse) {
   try {
+    res.setHeader('Cache-Control', 'public, max-age=43200, s-maxage=43200'); // Cache for 12 hours
     const urlObj = new URL(req.url || '', 'https://moviyfly.vercel.app');
     const sub = urlObj.searchParams.get('sub');
 

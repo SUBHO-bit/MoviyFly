@@ -3,6 +3,8 @@ import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { MoviePoster } from './MoviePoster';
 import { MovieMeta } from './MovieMeta';
+import { Link } from '../../lib/router';
+import { slugify } from '../../lib/sitemap';
 
 export interface MovieData {
   id: string;
@@ -37,13 +39,27 @@ export const MovieCard = React.memo<MovieCardProps>(({
   onToggleWatchlist,
   className,
 }) => {
+  const isTv = String(movie.id).startsWith('tv-');
+  const pathPrefix = isTv ? '/tv/' : '/movie/';
+  const titleSlug = slugify(movie.title);
+  const linkPath = `${pathPrefix}${movie.id}-${titleSlug}`;
+
   return (
-    <div
+    <Link
+      to={linkPath}
       className={cn(
         'group bg-[#18181C] border border-white/[0.06] rounded-[24px] p-3.5 flex flex-col justify-between transition-all duration-300 ease-out hover:scale-[1.02] hover:border-white/10 hover:shadow-xl cursor-pointer select-none h-[310px] sm:h-[360px] md:h-[390px]',
         className
       )}
-      onClick={() => onMoreInfo?.(movie)}
+      onClick={(e) => {
+        // Prevent trigger if clicking action elements
+        const target = e.target as HTMLElement;
+        if (target.closest('button') || target.closest('[role="button"]')) {
+          e.preventDefault();
+          return;
+        }
+        onMoreInfo?.(movie);
+      }}
     >
       {/* Visual Content: Poster overlay containing the IMDb badge, plus actions */}
       <MoviePoster
@@ -73,7 +89,7 @@ export const MovieCard = React.memo<MovieCardProps>(({
         rating={movie.rating}
         genres={movie.genres}
       />
-    </div>
+    </Link>
   );
 }, (prevProps, nextProps) => {
   return (

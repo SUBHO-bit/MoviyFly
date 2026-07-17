@@ -30,7 +30,7 @@ export const MovieDetailsPage: React.FC<MovieDetailsPageProps> = ({
 
   // Strip prefix "movie-" or "tv-" if present to get the raw TMDB ID
   const isTv = movieId.startsWith('tv-');
-  const rawTmdbId = movieId.replace('movie-', '').replace('tv-', '');
+  const rawTmdbId = movieId.replace('movie-', '').replace('tv-', '').split('-')[0];
 
   const fetchMediaDetails = React.useCallback(async () => {
     setLoading(true);
@@ -127,12 +127,15 @@ export const MovieDetailsPage: React.FC<MovieDetailsPageProps> = ({
         },
       ]);
 
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://moviyfly.vercel.app';
+      const cleanUrl = `${origin}/movie/${movieId}`;
+
       updateClientSEO({
         title: `${mediaItem.title} - Stream on MoviyFly`,
         description: mediaItem.overview || `Stream ${mediaItem.title} on MoviyFly with high-quality sources and complete details.`,
         image: mediaItem.backdrop || mediaItem.poster,
         type: type,
-        url: window.location.href,
+        url: cleanUrl,
         jsonLd: jsonLd,
         breadcrumbsLd: breadcrumbsLd,
       });
