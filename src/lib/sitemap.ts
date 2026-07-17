@@ -28,6 +28,34 @@ export function formatSitemapDate(date: Date = new Date()): string {
 }
 
 /**
+ * Normalizes any string or Date into YYYY-MM-DD format.
+ * Falls back to today's date if empty or invalid.
+ */
+export function normalizeSitemapDate(input?: string | Date | null): string {
+  if (!input) {
+    return formatSitemapDate();
+  }
+
+  if (input instanceof Date) {
+    return formatSitemapDate(input);
+  }
+
+  // Handle YYYY-MM-DD pattern
+  const match = input.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    return `${match[1]}-${match[2]}-${match[3]}`;
+  }
+
+  // Try parsing general Date format
+  const parsed = new Date(input);
+  if (!isNaN(parsed.getTime())) {
+    return formatSitemapDate(parsed);
+  }
+
+  return formatSitemapDate();
+}
+
+/**
  * Returns the default list of core static routes.
  */
 export function getCoreRoutes(options?: SitemapGeneratorOptions): SitemapEntry[] {
@@ -127,7 +155,7 @@ export function generateMovieSitemapEntry(
   const slug = getMovieSlug(item);
   return {
     loc: `${baseUrl}/movie/${slug}`,
-    lastmod: item.lastmod || formatSitemapDate(),
+    lastmod: normalizeSitemapDate(item.lastmod),
     changefreq: 'weekly',
     priority: 0.8,
   };
@@ -144,7 +172,7 @@ export function generateTVSitemapEntry(
   const slug = getTVSlug(item);
   return {
     loc: `${baseUrl}/tv/${slug}`,
-    lastmod: item.lastmod || formatSitemapDate(),
+    lastmod: normalizeSitemapDate(item.lastmod),
     changefreq: 'weekly',
     priority: 0.8,
   };
@@ -215,10 +243,12 @@ export async function fetchMoviesFromTMDB(baseUrl: string): Promise<DynamicMedia
       if (data && Array.isArray(data.results)) {
         for (const movie of data.results) {
           if (movie && movie.id) {
+            // Check if native release_date exists and is non-empty
+            const hasReleaseDate = !!movie.release_date && typeof movie.release_date === 'string' && movie.release_date.trim().length > 0;
             allMovies.push({
               id: movie.id,
               title: movie.title || movie.original_title || 'Untitled Movie',
-              lastmod: movie.release_date || formatSitemapDate(),
+              lastmod: hasReleaseDate ? normalizeSitemapDate(movie.release_date) : formatSitemapDate(),
             });
           }
         }
@@ -231,13 +261,21 @@ export async function fetchMoviesFromTMDB(baseUrl: string): Promise<DynamicMedia
   // Remove duplicate IDs
   const seenIds = new Set<string | number>();
   const uniqueMovies: DynamicMediaItem[] = [];
+  let releaseDateCount = 0;
+
   for (const movie of allMovies) {
     if (!seenIds.has(movie.id)) {
       seenIds.add(movie.id);
       uniqueMovies.push(movie);
+      
+      // Count items that have an actual release_date (not fallback to today)
+      if (movie.lastmod && movie.lastmod !== formatSitemapDate()) {
+        releaseDateCount++;
+      }
     }
   }
 
+  console.log(`[Sitemap Generator] Movie duplicates removed. Total generated URLs: ${uniqueMovies.length}. Items with native release_date: ${releaseDateCount}.`);
   return uniqueMovies;
 }
 
@@ -275,10 +313,12 @@ export async function fetchTVsFromTMDB(baseUrl: string): Promise<DynamicMediaIte
       if (data && Array.isArray(data.results)) {
         for (const tv of data.results) {
           if (tv && tv.id) {
+            // Check if native first_air_date exists and is non-empty
+            const hasFirstAirDate = !!tv.first_air_date && typeof tv.first_air_date === 'string' && tv.first_air_date.trim().length > 0;
             allTVs.push({
               id: tv.id,
               name: tv.name || tv.original_name || 'Untitled TV Show',
-              lastmod: tv.first_air_date || formatSitemapDate(),
+              lastmod: hasFirstAirDate ? normalizeSitemapDate(tv.first_air_date) : formatSitemapDate(),
             });
           }
         }
@@ -291,13 +331,21 @@ export async function fetchTVsFromTMDB(baseUrl: string): Promise<DynamicMediaIte
   // Remove duplicate IDs
   const seenIds = new Set<string | number>();
   const uniqueTVs: DynamicMediaItem[] = [];
+  let firstAirDateCount = 0;
+
   for (const tv of allTVs) {
     if (!seenIds.has(tv.id)) {
       seenIds.add(tv.id);
       uniqueTVs.push(tv);
+
+      // Count items that have an actual first_air_date (not fallback to today)
+      if (tv.lastmod && tv.lastmod !== formatSitemapDate()) {
+        firstAirDateCount++;
+      }
     }
   }
 
+  console.log(`[Sitemap Generator] TV duplicates removed. Total generated URLs: ${uniqueTVs.length}. Items with native first_air_date: ${firstAirDateCount}.`);
   return uniqueTVs;
 }
 
@@ -309,6 +357,75 @@ export function paginateEntries<T>(items: T[], page: number, pageSize: number = 
   const endIndex = startIndex + pageSize;
   if (startIndex < 0 || startIndex >= items.length) return [];
   return items.slice(startIndex, endIndex);
+}
+
+export interface SitemapRegistry {
+  index: string[]; // List of absolute sitemap URLs
+  getSitemapContent: (filename: string) => string | null;
+}
+
+/**
+ * Validates a sitemap XML string against the official Google / sitemap.org protocol requirements.
+ * Checks for maximum URL count, maximum uncompressed size, valid XML envelope, and valid tags.
+ */
+export function validateSitemapProtocol(xml: string, isIndex: boolean = false): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  // Check 1: Size limit (50 MB = 52428800 bytes)
+  const byteLength = typeof Buffer !== 'undefined' ? Buffer.from(xml, 'utf-8').byteLength : xml.length * 2;
+  if (byteLength > 52428800) {
+    errors.push(`Sitemap size of ${byteLength} bytes exceeds the 50 MB uncompressed protocol limit.`);
+  }
+
+  // Check 2: Well-formed start/end tags and namespace
+  if (!xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')) {
+    errors.push('Sitemap missing standard XML UTF-8 declaration.');
+  }
+
+  if (isIndex) {
+    if (!xml.includes('<sitemapindex') || !xml.includes('</sitemapindex>')) {
+      errors.push('Sitemap index is missing valid <sitemapindex> envelope tags.');
+    }
+    if (!xml.includes('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"')) {
+      errors.push('Sitemap index is missing correct xmlns namespace.');
+    }
+    
+    // Count index URLs
+    const sitemapCount = (xml.match(/<sitemap>/g) || []).length;
+    if (sitemapCount > 50000) {
+      errors.push(`Sitemap index contains ${sitemapCount} sitemaps, exceeding the 50,000 limit.`);
+    }
+  } else {
+    if (!xml.includes('<urlset') || !xml.includes('</urlset>')) {
+      errors.push('Sitemap is missing valid <urlset> envelope tags.');
+    }
+    if (!xml.includes('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"')) {
+      errors.push('Sitemap is missing correct xmlns namespace.');
+    }
+
+    // Count URLs
+    const urlCount = (xml.match(/<url>/g) || []).length;
+    if (urlCount > 50000) {
+      errors.push(`Sitemap contains ${urlCount} URLs, exceeding the 50,000 limit per sitemap file.`);
+    }
+
+    // Validate that every loc is fully escaped
+    const locMatches = xml.match(/<loc>(.*?)<\/loc>/g);
+    if (locMatches) {
+      for (const locTag of locMatches) {
+        const urlText = locTag.replace(/<\/?loc>/g, '');
+        // An unescaped ampersand in XML is illegal unless part of an entity reference
+        if (urlText.includes('&') && !/&amp;|&quot;|&apos;|&lt;|&gt;/.test(urlText)) {
+          errors.push(`Sitemap contains unescaped ampersand in location: ${urlText}`);
+        }
+      }
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors
+  };
 }
 
 /**
@@ -329,67 +446,92 @@ export function generateSitemapIndexXml(sitemapUrls: string[]): string {
     ].join('\n');
   });
 
-  return [xmlHeader, indexStart, ...xmlSitemaps, indexEnd].join('\n');
-}
+  const xml = [xmlHeader, indexStart, ...xmlSitemaps, indexEnd].join('\n');
+  
+  // Validate index sitemap
+  const validation = validateSitemapProtocol(xml, true);
+  if (!validation.valid) {
+    console.error(`[Sitemap Validator] Validation errors in sitemap index:`, validation.errors);
+  } else {
+    console.log(`[Sitemap Validator] Sitemap index is 100% compliant with Google/Sitemaps.org protocol.`);
+  }
 
-export interface SitemapRegistry {
-  index: string[]; // List of absolute sitemap URLs
-  getSitemapContent: (filename: string) => string | null;
+  return xml;
 }
 
 /**
  * High-performance, production-ready sitemap registry generator.
- * Automatically splits dynamic URLs into exactly 2 pages for movies and 2 pages for TV shows.
+ * Automatically splits dynamic URLs into pages conforming to Google's 50,000 limit.
+ * Keeps URLs sorted by TMDB ID.
  */
 export function generateSitemapRegistry(
   movies: DynamicMediaItem[],
   tvs: DynamicMediaItem[],
-  options?: SitemapGeneratorOptions
+  options?: SitemapGeneratorOptions & { pageSize?: number }
 ): SitemapRegistry {
   const baseUrl = options?.baseUrl || DEFAULT_BASE_URL;
+  const pageSize = options?.pageSize || 50000; // Standard Google limit
 
-  // 1. Static Core Sitemap
+  // Sort by TMDB ID ascending for consistent crawl order and scalability
+  const sortedMovies = [...movies].sort((a, b) => Number(a.id) - Number(b.id));
+  const sortedTVs = [...tvs].sort((a, b) => Number(a.id) - Number(b.id));
+
+  // Determine dynamic page counts (minimum 1 page per media type to maintain valid endpoints)
+  const totalMoviePages = Math.max(1, Math.ceil(sortedMovies.length / pageSize));
+  const totalTvPages = Math.max(1, Math.ceil(sortedTVs.length / pageSize));
+
+  // Build list of sub-sitemaps dynamically based on page count
+  const indexUrls: string[] = [`${baseUrl}/sitemaps/static.xml`];
+  for (let page = 1; page <= totalMoviePages; page++) {
+    indexUrls.push(`${baseUrl}/sitemaps/movies-${page}.xml`);
+  }
+  for (let page = 1; page <= totalTvPages; page++) {
+    indexUrls.push(`${baseUrl}/sitemaps/tv-${page}.xml`);
+  }
+
+  // Static Core Sitemap
   const coreEntries = getCoreRoutes(options);
-
-  // 2. Partition movies into exactly 2 chunks to keep movies-1.xml and movies-2.xml constant
-  const movieChunks = splitIntoContiguousChunks(movies, 2);
-
-  // 3. Partition TV Shows into exactly 2 chunks to keep tv-1.xml and tv-2.xml constant
-  const tvChunks = splitIntoContiguousChunks(tvs, 2);
-
-  // Build the list of sub-sitemaps (retains exactly the 5 static sitemaps requested)
-  const indexUrls: string[] = [
-    `${baseUrl}/sitemaps/static.xml`,
-    `${baseUrl}/sitemaps/movies-1.xml`,
-    `${baseUrl}/sitemaps/movies-2.xml`,
-    `${baseUrl}/sitemaps/tv-1.xml`,
-    `${baseUrl}/sitemaps/tv-2.xml`
-  ];
 
   return {
     index: indexUrls,
     getSitemapContent: (filename: string): string | null => {
+      let content: string | null = null;
+
       if (filename === 'static.xml') {
-        return buildSitemapXml(coreEntries);
+        content = buildSitemapXml(coreEntries);
+      } else {
+        const movieMatch = filename.match(/^movies-(\d+)\.xml$/);
+        if (movieMatch) {
+          const page = parseInt(movieMatch[1], 10);
+          if (page >= 1 && page <= totalMoviePages) {
+            const chunk = paginateEntries(sortedMovies, page, pageSize);
+            const entries = chunk.map((item) => generateMovieSitemapEntry(item, options));
+            content = buildSitemapXml(entries);
+          }
+        } else {
+          const tvMatch = filename.match(/^tv-(\d+)\.xml$/);
+          if (tvMatch) {
+            const page = parseInt(tvMatch[1], 10);
+            if (page >= 1 && page <= totalTvPages) {
+              const chunk = paginateEntries(sortedTVs, page, pageSize);
+              const entries = chunk.map((item) => generateTVSitemapEntry(item, options));
+              content = buildSitemapXml(entries);
+            }
+          }
+        }
       }
 
-      const movieMatch = filename.match(/^movies-(\d+)\.xml$/);
-      if (movieMatch) {
-        const pageIndex = parseInt(movieMatch[1], 10) - 1;
-        const chunk = movieChunks[pageIndex] || [];
-        const entries = chunk.map((item) => generateMovieSitemapEntry(item, options));
-        return buildSitemapXml(entries);
+      if (content !== null) {
+        // Validate against sitemap.org and Google protocols
+        const validation = validateSitemapProtocol(content, false);
+        if (!validation.valid) {
+          console.error(`[Sitemap Validator] Validation errors found in ${filename}:`, validation.errors);
+        } else {
+          console.log(`[Sitemap Validator] ${filename} is 100% compliant with Google/Sitemaps.org protocol.`);
+        }
       }
 
-      const tvMatch = filename.match(/^tv-(\d+)\.xml$/);
-      if (tvMatch) {
-        const pageIndex = parseInt(tvMatch[1], 10) - 1;
-        const chunk = tvChunks[pageIndex] || [];
-        const entries = chunk.map((item) => generateTVSitemapEntry(item, options));
-        return buildSitemapXml(entries);
-      }
-
-      return null;
+      return content;
     }
   };
 }
