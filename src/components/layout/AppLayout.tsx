@@ -105,7 +105,7 @@ export const AppLayout: React.FC = () => {
     const currentUrl = path === '/' ? `${origin}/` : `${origin}${path}`;
 
     let seoTitle = 'MoviyFly - Watch Movies & TV Shows Online';
-    let seoDesc = 'Watch trending movies and TV shows on MoviyFly.';
+    let seoDesc = 'Watch trending movies and TV shows on MoviyFly. Discover new releases, top-rated films, popular series, and build your personal watchlist.';
 
     if (activeItem === 'movies') {
       seoTitle = 'All Movies - MoviyFly Cinema';

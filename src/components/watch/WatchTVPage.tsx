@@ -110,7 +110,7 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://moviyfly1.onrender.com';
       updateClientSEO({
         title: 'MoviyFly - Watch Movies & TV Shows Online',
-        description: 'Watch trending movies and TV shows on MoviyFly.',
+        description: 'Watch trending movies and TV shows on MoviyFly. Discover new releases, top-rated films, popular series, and build your personal watchlist.',
         url: `${origin}/`,
         type: 'website'
       });
