@@ -474,19 +474,28 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({
             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 w-full"
           >
             <AnimatePresence mode="popLayout">
-              {processedMovies.map((movie) => (
-                <motion.div
-                  key={movie.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <MovieCard
-                    movie={movie}
-                    isInWatchlist={!!watchlist[movie.id]}
-                    onPlay={(m) => {
+              {processedMovies.map((movie) => {
+                const movieIdStr = String(movie.id);
+                const rawId = movieIdStr.replace('movie-', '').replace('tv-', '');
+                const isInWatchlist = !!(
+                  watchlist[movieIdStr] ||
+                  watchlist[rawId] ||
+                  watchlist[`movie-${rawId}`] ||
+                  watchlist[`tv-${rawId}`]
+                );
+                return (
+                  <motion.div
+                    key={movie.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <MovieCard
+                      movie={movie}
+                      isInWatchlist={isInWatchlist}
+                      onPlay={(m) => {
                       if (String(m.id).startsWith('tv-')) {
                         navigate(`/tv/${m.id}`);
                       } else {
@@ -503,7 +512,8 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({
                     onToggleWatchlist={onToggleWatchlist}
                   />
                 </motion.div>
-              ))}
+              );
+              })}
             </AnimatePresence>
           </motion.div>
 

@@ -20,6 +20,7 @@ import { MoviePage } from '../movie/MoviePage';
 import { TVShowsPage } from '../tv/TVShowsPage';
 import { Logo } from '../common/Logo';
 import { getMovieIdFromPath, getTVIdFromPath, getMovieIdFromWatchPath, getTVIdFromWatchPath, navigate } from '../../lib/router';
+import { useWatchlist } from '../../context/WatchlistContext';
 
 export interface MainContentProps {
   pageTitle: string;
@@ -27,7 +28,7 @@ export interface MainContentProps {
 }
 
 export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed = false }) => {
-  const [watchlist, setWatchlist] = React.useState<Record<string, boolean>>({});
+  const { watchlist, watchlistItems: watchlistMovies, toggleWatchlist: handleToggleWatchlist } = useWatchlist();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -447,67 +448,6 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
     }
   };
 
-  const handleToggleWatchlist = (movie: MovieData) => {
-    setWatchlist((prev) => ({
-      ...prev,
-      [movie.id]: !prev[movie.id],
-    }));
-  };
-
-  const watchlistMovies = React.useMemo(() => {
-    const allMovies = [
-      ...trendingNow,
-      ...trendingInIndia,
-      ...trendingWorldwide,
-      ...bollywoodBlockbusters,
-      ...southIndianHits,
-      ...hindiDubbedMovies,
-      ...hollywoodHits,
-      ...popularMovies,
-      ...topRated,
-      ...newReleases,
-      ...popularTvShows,
-      ...trendingWebSeries,
-      ...animeCollection,
-      ...koreanDramas,
-      ...crimeThrillers,
-      ...comedyMovies,
-      ...romanceMovies,
-      ...horrorMovies,
-      ...scifiMovies,
-      ...editorsPicks,
-    ];
-    const uniqueMap = new Map<string | number, MovieData>();
-    allMovies.forEach(m => {
-      if (m && m.id && watchlist[m.id]) {
-        uniqueMap.set(m.id, m);
-      }
-    });
-    return Array.from(uniqueMap.values());
-  }, [
-    watchlist,
-    trendingNow,
-    trendingInIndia,
-    trendingWorldwide,
-    bollywoodBlockbusters,
-    southIndianHits,
-    hindiDubbedMovies,
-    hollywoodHits,
-    popularMovies,
-    topRated,
-    newReleases,
-    popularTvShows,
-    trendingWebSeries,
-    animeCollection,
-    koreanDramas,
-    crimeThrillers,
-    comedyMovies,
-    romanceMovies,
-    horrorMovies,
-    scifiMovies,
-    editorsPicks,
-  ]);
-
   const isHomeOrMovies = pageTitle === 'home' || pageTitle === 'movies' || pageTitle === 'tvshows' || pageTitle === 'watchlist' || pageTitle === 'movie-details' || pageTitle === 'tv-details';
 
   return (
@@ -615,11 +555,6 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
             ))}
           </div>
         )}
-
-        {/* Premium Logo Design Showcase */}
-        <div className="pt-8 border-t border-white/[0.06] pb-10">
-          <Logo variant="showcase" />
-        </div>
       </div>
 
       {/* Persistent Home page tab keeps loaded state & scroll position */}

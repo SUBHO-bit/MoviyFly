@@ -23,9 +23,6 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
     >
       <UserProfileCard
         collapsed={collapsed}
-        username="dasram"
-        email="dasram98081@gmail.com"
-        tier="VIP"
       />
 
       {/* When collapsed, we can also show a centered toggle button to allow the user to easily expand */}

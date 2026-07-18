@@ -33,8 +33,8 @@ export const NotificationButton: React.FC<NotificationButtonProps> = ({ classNam
     },
     {
       id: 2,
-      title: 'Subscription Renewed',
-      desc: 'Your VIP premium plan was refreshed successfully.',
+      title: 'Welcome to MoviyFly',
+      desc: 'Start exploring trending movies and TV shows today.',
       time: '1d ago',
       unread: false,
       icon: <CheckCircle className="h-4 w-4 text-success" strokeWidth={1.5} />

@@ -67,16 +67,26 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
 
       {/* Grid items */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 w-full">
-        {results.map((movie) => (
-          <MovieCard
-            key={movie.id}
-            movie={movie}
-            isInWatchlist={!!watchlist[movie.id]}
-            onPlay={onPlayMovie}
-            onMoreInfo={onMoreInfo}
-            onToggleWatchlist={onToggleWatchlist}
-          />
-        ))}
+        {results.map((movie) => {
+          const movieIdStr = String(movie.id);
+          const rawId = movieIdStr.replace('movie-', '').replace('tv-', '');
+          const isInWatchlist = !!(
+            watchlist[movieIdStr] ||
+            watchlist[rawId] ||
+            watchlist[`movie-${rawId}`] ||
+            watchlist[`tv-${rawId}`]
+          );
+          return (
+            <MovieCard
+              key={movie.id}
+              movie={movie}
+              isInWatchlist={isInWatchlist}
+              onPlay={onPlayMovie}
+              onMoreInfo={onMoreInfo}
+              onToggleWatchlist={onToggleWatchlist}
+            />
+          );
+        })}
       </div>
 
       {/* Bottom marker for Infinite Scroll loading */}

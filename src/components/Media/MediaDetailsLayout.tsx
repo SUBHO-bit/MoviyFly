@@ -62,7 +62,14 @@ export const MediaDetailsLayout: React.FC<MediaDetailsLayoutProps> = ({
     navigate(`/watch/tv/${rawTmdbId}?season=${season}&episode=${episodeNumber}`);
   };
 
-  const isInWatchlist = !!watchlist[media.id];
+  const mediaIdStr = String(media.id);
+  const rawId = mediaIdStr.replace('movie-', '').replace('tv-', '');
+  const isInWatchlist = !!(
+    watchlist[mediaIdStr] ||
+    watchlist[rawId] ||
+    watchlist[`movie-${rawId}`] ||
+    watchlist[`tv-${rawId}`]
+  );
 
   return (
     <div className="w-full select-none flex flex-col bg-[#0B0B10] overflow-x-hidden">

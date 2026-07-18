@@ -4,6 +4,7 @@ import { CarouselControls } from './CarouselControls';
 import { CarouselIndicators } from './CarouselIndicators';
 import { cn } from '../../lib/utils';
 import { navigate } from '../../lib/router';
+import { useWatchlist } from '../../context/WatchlistContext';
 
 import { MovieData } from '../movie/MovieCard';
 
@@ -85,7 +86,7 @@ export interface HeroBannerProps {
 export const HeroBanner: React.FC<HeroBannerProps> = ({ movies, collapsed = false, autoRotateInterval = 9000 }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const [isHovered, setIsHovered] = React.useState(false);
-  const [watchlist, setWatchlist] = React.useState<Record<string, boolean>>({});
+  const { watchlist, toggleWatchlist } = useWatchlist();
 
   // Smart backdrop filter & resolution verification
   const activeMovies = React.useMemo(() => {
@@ -160,11 +161,8 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ movies, collapsed = fals
     }
   }, [currentIndex, activeMovies]);
 
-  const handleToggleWatchlist = (id: string) => {
-    setWatchlist((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+  const handleToggleWatchlist = (movie: MovieData) => {
+    toggleWatchlist(movie);
   };
 
   // Keyboard navigation logic
@@ -191,13 +189,21 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ movies, collapsed = fals
       {activeMovies.map((movie, index) => {
         const isActive = currentIndex === index;
         const isNext = (currentIndex + 1) % activeMovies.length === index;
+        const movieIdStr = String(movie.id);
+        const rawId = movieIdStr.replace('movie-', '').replace('tv-', '');
+        const isInWatchlist = !!(
+          watchlist[movieIdStr] ||
+          watchlist[rawId] ||
+          watchlist[`movie-${rawId}`] ||
+          watchlist[`tv-${rawId}`]
+        );
         return (
           <HeroSlide
             key={movie.id}
             movie={movie}
             active={isActive}
             isNext={isNext}
-            isInWatchlist={!!watchlist[movie.id]}
+            isInWatchlist={isInWatchlist}
             onWatchNow={() => {
               if (String(movie.id).startsWith('tv-')) {
                 navigate(`/tv/${movie.id}`);
@@ -212,7 +218,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ movies, collapsed = fals
                 navigate(`/movie/${movie.id}`);
               }
             }}
-            onToggleWatchlist={() => handleToggleWatchlist(movie.id)}
+            onToggleWatchlist={() => handleToggleWatchlist(movie)}
             collapsed={collapsed}
           />
         );

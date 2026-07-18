@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidWatchlistItem(data) {
+      return data.keys().hasAll(['movieId', 'mediaType', 'title', 'posterPath', 'backdropPath', 'tmdbRating', 'releaseDate', 'genres', 'addedAt'])
+          && data.keys().size() == 9
+          && data.movieId is string && data.movieId.size() <= 128
+          && data.mediaType is string && data.mediaType.size() <= 64
+          && data.title is string && data.title.size() <= 512
+          && data.posterPath is string && data.posterPath.size() <= 512
+          && data.backdropPath is string && data.backdropPath.size() <= 512
+          && data.tmdbRating is number
+          && data.releaseDate is string && data.releaseDate.size() <= 64
+          && data.genres is list && data.genres.size() <= 50;
+    }
+
+    // Users collection rules
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid && request.resource.data.uid == uid && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time && request.resource.data.lastLogin == request.time;
+      allow update: if request.auth != null && request.auth.uid == uid && request.resource.data.uid == uid && request.resource.data.updatedAt == request.time && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLogin', 'updatedAt'])
+      );
+      allow delete: if false;
+
+      // Watchlist subcollection rules
+      match /watchlist/{movieId} {
+        allow read, create, update, delete: if request.auth != null && request.auth.uid == uid;
+      }
+
+      // Continue Watching subcollection rules (for compatibility)
+      match /continueWatching/{documentId} {
+        allow read, create, update, delete: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // Usernames collection rules
+    match /usernames/{usernameLower} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if isSignedIn() && usernameLower.matches('^[a-z0-9_.]+$') && request.resource.data.uid == request.auth.uid && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+  }
+}

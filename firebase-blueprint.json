@@ -1,0 +1,120 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Public and private user account settings",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique Firebase Authentication UID"
+        },
+        "username": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 20,
+          "pattern": "^[a-zA-Z0-9_.]+$"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "photoURL": {
+          "type": "string"
+        },
+        "emailVerified": {
+          "type": "boolean"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "admin"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "suspended"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastLogin": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "username", "email", "displayName", "photoURL", "emailVerified", "role", "status", "createdAt", "updatedAt", "lastLogin"]
+    },
+    "UsernameClaim": {
+      "title": "Username Claim",
+      "description": "Unique mapping of lowercase username to UID to prevent duplicates",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "createdAt"]
+    },
+    "WatchlistItem": {
+      "title": "Watchlist Item",
+      "description": "User saved movie or tv show in their watchlist",
+      "type": "object",
+      "properties": {
+        "movieId": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "posterPath": {
+          "type": "string"
+        },
+        "backdropPath": {
+          "type": "string"
+        },
+        "tmdbRating": {
+          "type": "number"
+        },
+        "releaseDate": {
+          "type": "string"
+        },
+        "genres": {
+          "type": "array"
+        },
+        "addedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["movieId", "mediaType", "title", "posterPath", "backdropPath", "tmdbRating", "releaseDate", "genres", "addedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profiles collection"
+    },
+    "/usernames/{usernameLower}": {
+      "schema": "UsernameClaim",
+      "description": "Unique usernames registration collection"
+    },
+    "/users/{uid}/watchlist/{movieId}": {
+      "schema": "WatchlistItem",
+      "description": "User saved movies/tv shows watchlist sub-collection"
+    }
+  }
+}

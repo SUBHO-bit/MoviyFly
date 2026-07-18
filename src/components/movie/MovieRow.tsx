@@ -222,21 +222,31 @@ export const MovieRow: React.FC<MovieRowProps> = ({
           )}
           style={{ scrollbarWidth: 'none' }}
         >
-          {movies.map((movie) => (
-            <div
-              key={movie.id}
-              className="w-[170px] sm:w-[210px] md:w-[230px] shrink-0"
-              style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
-            >
-              <MovieCard
-                movie={movie}
-                isInWatchlist={!!watchlist[movie.id]}
-                onPlay={onPlayMovie}
-                onMoreInfo={onMoreInfo}
-                onToggleWatchlist={onToggleWatchlist}
-              />
-            </div>
-          ))}
+          {movies.map((movie) => {
+            const movieIdStr = String(movie.id);
+            const rawId = movieIdStr.replace('movie-', '').replace('tv-', '');
+            const isInWatchlist = !!(
+              watchlist[movieIdStr] ||
+              watchlist[rawId] ||
+              watchlist[`movie-${rawId}`] ||
+              watchlist[`tv-${rawId}`]
+            );
+            return (
+              <div
+                key={movie.id}
+                className="w-[170px] sm:w-[210px] md:w-[230px] shrink-0"
+                style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
+              >
+                <MovieCard
+                  movie={movie}
+                  isInWatchlist={isInWatchlist}
+                  onPlay={onPlayMovie}
+                  onMoreInfo={onMoreInfo}
+                  onToggleWatchlist={onToggleWatchlist}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

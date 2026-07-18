@@ -267,7 +267,12 @@ export const WatchPage: React.FC<WatchPageProps> = ({
       {/* Details & Actions below player */}
       <WatchActions
         movie={movie}
-        isInWatchlist={!!watchlist[movie.id]}
+        isInWatchlist={!!(
+          watchlist[String(movie.id)] ||
+          watchlist[String(movie.id).replace('movie-', '').replace('tv-', '')] ||
+          watchlist[`movie-${String(movie.id).replace('movie-', '').replace('tv-', '')}`] ||
+          watchlist[`tv-${String(movie.id).replace('movie-', '').replace('tv-', '')}`]
+        )}
         onToggleWatchlist={handleToggleWatchlist}
         onBack={handleBackToDetails}
       />

@@ -317,7 +317,14 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
     );
   }
 
-  const isShowInWatchlist = !!watchlist[`tv-${tvShow.id}`];
+  const tvShowIdStr = `tv-${tvShow.id}`;
+  const tvShowRawId = String(tvShow.id);
+  const isShowInWatchlist = !!(
+    watchlist[tvShowIdStr] ||
+    watchlist[tvShowRawId] ||
+    watchlist[`movie-${tvShowRawId}`] ||
+    watchlist[`tv-${tvShowRawId}`]
+  );
 
   return (
     <div className="w-full max-w-8xl mx-auto py-4 space-y-8 select-none" id="watch-tv-page-content-grid">
