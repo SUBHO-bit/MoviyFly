@@ -10,14 +10,28 @@ import { MovieRowSkeleton } from '../movie/MovieRowSkeleton';
 import { movieService } from '../../services/movie.service';
 import { tvService } from '../../services/tv.service';
 import { heroService } from '../../services/hero.service';
-import { MovieDetailsPage } from '../movie/MovieDetailsPage';
-import { TVDetailsPage } from '../tv/TVDetailsPage';
-import { SearchPage } from '../search/SearchPage';
-import { WatchPage } from '../watch/WatchPage';
-import { WatchTVPage } from '../watch/WatchTVPage';
-import { CategoryPage } from '../movie/CategoryPage';
-import { MoviePage } from '../movie/MoviePage';
-import { TVShowsPage } from '../tv/TVShowsPage';
+const MovieDetailsPage = React.lazy(() => import('../movie/MovieDetailsPage').then(m => ({ default: m.MovieDetailsPage })));
+const TVDetailsPage = React.lazy(() => import('../tv/TVDetailsPage').then(m => ({ default: m.TVDetailsPage })));
+const SearchPage = React.lazy(() => import('../search/SearchPage').then(m => ({ default: m.SearchPage })));
+const WatchPage = React.lazy(() => import('../watch/WatchPage').then(m => ({ default: m.WatchPage })));
+const WatchTVPage = React.lazy(() => import('../watch/WatchTVPage').then(m => ({ default: m.WatchTVPage })));
+const CategoryPage = React.lazy(() => import('../movie/CategoryPage').then(m => ({ default: m.CategoryPage })));
+const MoviePage = React.lazy(() => import('../movie/MoviePage').then(m => ({ default: m.MoviePage })));
+const TVShowsPage = React.lazy(() => import('../tv/TVShowsPage').then(m => ({ default: m.TVShowsPage })));
+
+const PageLoader: React.FC = () => (
+  <div className="w-full flex-grow flex flex-col items-center justify-center py-24 min-h-[400px] transition-all duration-300">
+    <div className="relative flex items-center justify-center">
+      {/* Outer spinning ring */}
+      <div className="w-12 h-12 rounded-full border-2 border-[#8B5CF6]/10 border-t-[#8B5CF6] animate-spin" />
+      {/* Inner pulsing orb */}
+      <div className="absolute w-4 h-4 bg-[#A855F7]/40 rounded-full animate-ping" />
+    </div>
+    <span className="mt-4 text-xs font-bold text-[#B3B3B8] tracking-widest uppercase animate-pulse">
+      Loading Cinematic Experience...
+    </span>
+  </div>
+);
 import { Logo } from '../common/Logo';
 import { getMovieIdFromPath, getTVIdFromPath, getMovieIdFromWatchPath, getTVIdFromWatchPath, navigate } from '../../lib/router';
 import { useWatchlist } from '../../context/WatchlistContext';
@@ -454,65 +468,81 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
       <div className="flex-grow flex-1 flex flex-col w-full relative">
         {/* Conditionally rendered details, search, watch and category pages to ensure correct lifecycle mounts */}
       {pageTitle === 'watch-tv' && (
-        <WatchTVPage
-          tvId={getTVIdFromWatchPath(window.location.pathname) || ''}
-          watchlist={watchlist}
-          onToggleWatchlist={handleToggleWatchlist}
-        />
+        <React.Suspense fallback={<PageLoader />}>
+          <WatchTVPage
+            tvId={getTVIdFromWatchPath(window.location.pathname) || ''}
+            watchlist={watchlist}
+            onToggleWatchlist={handleToggleWatchlist}
+          />
+        </React.Suspense>
       )}
       {pageTitle === 'watch-movie' && (
-        <WatchPage
-          movieId={getMovieIdFromWatchPath(window.location.pathname) || ''}
-          watchlist={watchlist}
-          onToggleWatchlist={handleToggleWatchlist}
-        />
+        <React.Suspense fallback={<PageLoader />}>
+          <WatchPage
+            movieId={getMovieIdFromWatchPath(window.location.pathname) || ''}
+            watchlist={watchlist}
+            onToggleWatchlist={handleToggleWatchlist}
+          />
+        </React.Suspense>
       )}
       {pageTitle === 'search' && (
-        <SearchPage
-          watchlist={watchlist}
-          onToggleWatchlist={handleToggleWatchlist}
-          onPlayMovie={handlePlayMovie}
-        />
+        <React.Suspense fallback={<PageLoader />}>
+          <SearchPage
+            watchlist={watchlist}
+            onToggleWatchlist={handleToggleWatchlist}
+            onPlayMovie={handlePlayMovie}
+          />
+        </React.Suspense>
       )}
       {pageTitle === 'tv-details' && (
-        <TVDetailsPage
-          tvId={getTVIdFromPath(window.location.pathname) || ''}
-          watchlist={watchlist}
-          onToggleWatchlist={handleToggleWatchlist}
-        />
+        <React.Suspense fallback={<PageLoader />}>
+          <TVDetailsPage
+            tvId={getTVIdFromPath(window.location.pathname) || ''}
+            watchlist={watchlist}
+            onToggleWatchlist={handleToggleWatchlist}
+          />
+        </React.Suspense>
       )}
       {pageTitle === 'movie-details' && (
-        <MovieDetailsPage
-          movieId={getMovieIdFromPath(window.location.pathname) || ''}
-          watchlist={watchlist}
-          onToggleWatchlist={handleToggleWatchlist}
-        />
+        <React.Suspense fallback={<PageLoader />}>
+          <MovieDetailsPage
+            movieId={getMovieIdFromPath(window.location.pathname) || ''}
+            watchlist={watchlist}
+            onToggleWatchlist={handleToggleWatchlist}
+          />
+        </React.Suspense>
       )}
       {pageTitle === 'category' && (
-        <CategoryPage
-          categorySlug={window.location.pathname.substring(window.location.pathname.lastIndexOf('/') + 1)}
-          watchlist={watchlist}
-          onToggleWatchlist={handleToggleWatchlist}
-          collapsed={collapsed}
-        />
+        <React.Suspense fallback={<PageLoader />}>
+          <CategoryPage
+            categorySlug={window.location.pathname.substring(window.location.pathname.lastIndexOf('/') + 1)}
+            watchlist={watchlist}
+            onToggleWatchlist={handleToggleWatchlist}
+            collapsed={collapsed}
+          />
+        </React.Suspense>
       )}
 
       {/* Persistent Movies tab keeps loaded state & scroll position */}
       <div className={cn("w-full flex-grow flex flex-col", pageTitle === 'movies' ? "block" : "hidden")}>
-        <MoviePage
-          collapsed={collapsed}
-          watchlist={watchlist}
-          onToggleWatchlist={handleToggleWatchlist}
-        />
+        <React.Suspense fallback={<PageLoader />}>
+          <MoviePage
+            collapsed={collapsed}
+            watchlist={watchlist}
+            onToggleWatchlist={handleToggleWatchlist}
+          />
+        </React.Suspense>
       </div>
 
       {/* Persistent TV Shows tab keeps loaded state & scroll position */}
       <div className={cn("w-full flex-grow flex flex-col", pageTitle === 'tvshows' ? "block" : "hidden")}>
-        <TVShowsPage
-          collapsed={collapsed}
-          watchlist={watchlist}
-          onToggleWatchlist={handleToggleWatchlist}
-        />
+        <React.Suspense fallback={<PageLoader />}>
+          <TVShowsPage
+            collapsed={collapsed}
+            watchlist={watchlist}
+            onToggleWatchlist={handleToggleWatchlist}
+          />
+        </React.Suspense>
       </div>
 
       {/* Persistent Watchlist & Brand Design Hub tab keeps loaded state & scroll position */}
