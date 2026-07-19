@@ -298,6 +298,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/popular-tv-shows')}
               />
             )}
 
@@ -310,6 +311,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/airing-today-tv')}
               />
             )}
 
@@ -322,6 +324,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/top-rated-tv')}
               />
             )}
 
@@ -334,6 +337,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/indian-tv')}
               />
             )}
 
@@ -346,6 +350,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/international-tv')}
               />
             )}
 
@@ -358,6 +363,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/netflix-originals')}
               />
             )}
 
@@ -370,6 +376,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/apple-tv-originals')}
               />
             )}
 
@@ -382,6 +389,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/hbo-originals')}
               />
             )}
 
@@ -394,6 +402,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/disney-originals')}
               />
             )}
 
@@ -406,6 +415,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/prime-originals')}
               />
             )}
 
@@ -418,6 +428,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/scifi-tv')}
               />
             )}
 
@@ -430,6 +441,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/horror-tv')}
               />
             )}
 
@@ -442,6 +454,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/comedy-tv')}
               />
             )}
 
@@ -454,6 +467,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/crime-mystery-tv')}
               />
             )}
 
@@ -466,6 +480,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/romance-tv')}
               />
             )}
 
@@ -478,6 +493,7 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
                 onMoreInfo={handleMoreInfo}
                 onToggleWatchlist={onToggleWatchlist}
                 watchlist={watchlist}
+                onSeeAll={() => navigate('/movies/action-tv')}
               />
             )}
           </div>

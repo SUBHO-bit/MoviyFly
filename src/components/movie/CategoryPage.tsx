@@ -145,6 +145,81 @@ const CATEGORY_MAP: Record<string, CategoryConfig> = {
     description: 'Spectacular futuristic science-fiction, alternate universes, and magical high fantasy.',
     fetcher: (page) => movieService.getMoviesByGenre(878, page)
   },
+  'airing-today-tv': {
+    title: '📺 Airing Today',
+    description: 'Television series airing new episodes today.',
+    fetcher: (page) => tvService.getAiringToday(page)
+  },
+  'top-rated-tv': {
+    title: '⭐ Top Rated Series',
+    description: 'Critically acclaimed television series ranked highest by viewers.',
+    fetcher: (page) => tvService.getTopRatedTV(page)
+  },
+  'indian-tv': {
+    title: '🇮🇳 Indian Web Series',
+    description: 'Premium Indian television series and web originals across multiple languages.',
+    fetcher: (page) => tvService.getIndianTVSeries(page)
+  },
+  'international-tv': {
+    title: '🌍 International Series',
+    description: 'Top-rated international television series and dramas from around the globe.',
+    fetcher: (page) => tvService.getInternationalTVSeries(page)
+  },
+  'netflix-originals': {
+    title: '🎬 Netflix Originals',
+    description: 'Premium television originals produced and distributed by Netflix.',
+    fetcher: (page) => tvService.getNetflixOriginals(page)
+  },
+  'apple-tv-originals': {
+    title: '🍎 Apple TV+',
+    description: 'Highly acclaimed original television series from Apple TV+.',
+    fetcher: (page) => tvService.getAppleTVOriginals(page)
+  },
+  'hbo-originals': {
+    title: '🔥 HBO Originals',
+    description: 'Groundbreaking, award-winning original series from the Home Box Office.',
+    fetcher: (page) => tvService.getHBOOriginals(page)
+  },
+  'disney-originals': {
+    title: '👑 Disney+ Originals',
+    description: 'Magical original series and premium exclusives from Disney+.',
+    fetcher: (page) => tvService.getDisneyOriginals(page)
+  },
+  'prime-originals': {
+    title: '🎯 Prime Video Originals',
+    description: 'Binge-worthy original television series produced by Amazon Prime Video.',
+    fetcher: (page) => tvService.getPrimeOriginals(page)
+  },
+  'scifi-tv': {
+    title: '🚀 Sci-Fi Series',
+    description: 'Spectacular futuristic science-fiction, fantasy, and adventure television series.',
+    fetcher: (page) => tvService.getSciFiSeries(page)
+  },
+  'horror-tv': {
+    title: '👻 Horror Series',
+    description: 'Chilling paranormal encounters, intense psychological suspense, and monster series.',
+    fetcher: (page) => tvService.getHorrorSeries(page)
+  },
+  'comedy-tv': {
+    title: '😂 Comedy Series',
+    description: 'Hilarious sitcoms, witty comedy dramas, and funny talk show series.',
+    fetcher: (page) => tvService.getComedySeries(page)
+  },
+  'crime-mystery-tv': {
+    title: '🕵 Crime & Mystery',
+    description: 'Gripping crime procedurals, edge-of-your-seat detective shows, and noir mysteries.',
+    fetcher: (page) => tvService.getCrimeMysterySeries(page)
+  },
+  'romance-tv': {
+    title: '❤️ Romance Series',
+    description: 'Heartfelt relationship dramas, sweeps of romance, and emotional love stories.',
+    fetcher: (page) => tvService.getRomanceSeries(page)
+  },
+  'action-tv': {
+    title: '⚔ Action Series',
+    description: 'High-octane television thrillers, martial arts, and military adventure series.',
+    fetcher: (page) => tvService.getActionSeries(page)
+  },
 };
 
 export const CategoryPage: React.FC<CategoryPageProps> = ({
@@ -192,7 +267,54 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({
         setLoading(true);
       }
 
-      const newMovies = await config.fetcher(pageNum);
+      let newMovies = await config.fetcher(pageNum);
+      
+      // If any item is a TV show, map estimated seasons to runtime
+      newMovies = newMovies.map(m => {
+        if (m.id.startsWith('tv-') && (!m.runtime || !m.runtime.toLowerCase().includes('season'))) {
+          const getSeasonsByTitleLocal = (title: string, popularity: number = 0): string => {
+            const lower = title.toLowerCase();
+            if (lower.includes('breaking bad')) return '5 Seasons';
+            if (lower.includes('better call saul')) return '6 Seasons';
+            if (lower.includes('peaky blinders')) return '6 Seasons';
+            if (lower.includes('stranger things')) return '4 Seasons';
+            if (lower.includes('the boys')) return '4 Seasons';
+            if (lower.includes('the bear')) return '3 Seasons';
+            if (lower.includes('mirzapur')) return '3 Seasons';
+            if (lower.includes('panchayat')) return '3 Seasons';
+            if (lower.includes('aarya')) return '3 Seasons';
+            if (lower.includes('dark')) return '3 Seasons';
+            if (lower.includes('the witcher')) return '3 Seasons';
+            if (lower.includes('daredevil')) return '3 Seasons';
+            if (lower.includes('the family man')) return '2 Seasons';
+            if (lower.includes('special ops')) return '2 Seasons';
+            if (lower.includes('asur')) return '2 Seasons';
+            if (lower.includes('delhi crime')) return '2 Seasons';
+            if (lower.includes('rocket boys')) return '2 Seasons';
+            if (lower.includes('house of the dragon')) return '2 Seasons';
+            if (lower.includes('loki')) return '2 Seasons';
+            if (lower.includes('the white lotus')) return '2 Seasons';
+            if (lower.includes('wednesday')) return '1 Season';
+            if (lower.includes('the last of us')) return '1 Season';
+            if (lower.includes('severance')) return '1 Season';
+            if (lower.includes('the sandman')) return '1 Season';
+            if (lower.includes('kohrra')) return '1 Season';
+            if (lower.includes('the railway men')) return '1 Season';
+            if (lower.includes('khakee')) return '1 Season';
+            if (lower.includes('the night manager')) return '1 Season';
+            
+            if (popularity > 300) return '4 Seasons';
+            if (popularity > 150) return '3 Seasons';
+            if (popularity > 80) return '2 Seasons';
+            return '1 Season';
+          };
+          return {
+            ...m,
+            runtime: getSeasonsByTitleLocal(m.title, m.popularity || 0)
+          };
+        }
+        return m;
+      });
       
       if (newMovies.length === 0) {
         setHasMore(false);
