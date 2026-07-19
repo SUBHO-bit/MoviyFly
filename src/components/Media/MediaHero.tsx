@@ -9,7 +9,7 @@ import { MediaSoundToggle } from './MediaSoundToggle';
 import { movieService } from '../../services/movie.service';
 import { tvService } from '../../services/tv.service';
 import { fetchFromTMDB } from '../../lib/api/tmdb';
-import { TMDB_CONFIG } from '../../config/tmdb';
+import { TMDB_CONFIG, getLogoUrl } from '../../config/tmdb';
 
 interface MediaHeroProps {
   media: MediaItem;
@@ -152,7 +152,7 @@ export const MediaHero: React.FC<MediaHeroProps> = ({
             selectedLogo = data.logos.find(l => !l.iso_639_1) || data.logos[0];
           }
           if (selectedLogo && isMounted) {
-            setLogoUrl(`${TMDB_CONFIG.IMAGE_BASE_URL}/original${selectedLogo.file_path}`);
+            setLogoUrl(getLogoUrl(selectedLogo.file_path));
           } else if (isMounted) {
             setLogoUrl(null);
           }

@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { movieService } from '../../services/movie.service';
 import { tvService } from '../../services/tv.service';
+import { getProfileUrl } from '../../config/tmdb';
 
 interface CastMember {
   id: number;
@@ -132,7 +133,7 @@ export const MediaCast: React.FC<MediaCastProps> = ({ mediaId }) => {
         >
           {cast.map((actor, idx) => {
             const profileUrl = actor.profile_path 
-              ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+              ? getProfileUrl(actor.profile_path)
               : null;
 
             return (

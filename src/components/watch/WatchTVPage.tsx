@@ -16,6 +16,7 @@ import { LocalStorageManager } from './LocalStorageManager';
 import { PlayerController } from './PlayerController';
 import { updateClientSEO } from '../../lib/seo';
 import { generateTVSeriesSchema, generateVideoObjectSchema, injectSchema, clearSchema } from '../../lib/schema';
+import { getBackdropUrl, getPosterUrl } from '../../config/tmdb';
 
 interface WatchTVPageProps {
   tvId: string;
@@ -126,7 +127,7 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
         url: typeof window !== 'undefined' ? window.location.href : '',
       });
     } else {
-      const image = tvShow.backdrop_path ? `https://image.tmdb.org/t/p/original${tvShow.backdrop_path}` : (tvShow.poster_path ? `https://image.tmdb.org/t/p/w500${tvShow.poster_path}` : undefined);
+      const image = tvShow.backdrop_path ? getBackdropUrl(tvShow.backdrop_path) : (tvShow.poster_path ? getPosterUrl(tvShow.poster_path) : undefined);
       updateClientSEO({
         title: `Watch ${tvShow.name} Season ${season} Episode ${episode} Online | MoviyFly`,
         description: tvShow.overview || `Stream ${tvShow.name} Season ${season} Episode ${episode} in HD quality with fast streaming servers on MoviyFly.`,
@@ -140,7 +141,7 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
   // Schema.org structured data injection for TV watch page
   React.useEffect(() => {
     if (!loading && tvShow) {
-      const imageUrl = tvShow.backdrop_path ? `https://image.tmdb.org/t/p/original${tvShow.backdrop_path}` : (tvShow.poster_path ? `https://image.tmdb.org/t/p/w500${tvShow.poster_path}` : '');
+      const imageUrl = tvShow.backdrop_path ? getBackdropUrl(tvShow.backdrop_path) : (tvShow.poster_path ? getPosterUrl(tvShow.poster_path) : '');
 
       const tvSchema = generateTVSeriesSchema({
         name: tvShow.name,
@@ -229,8 +230,8 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
       runtime: seasonsLabel,
       language: tvShow.original_language?.toUpperCase() || 'EN',
       ageRating: 'TV-14',
-      poster: tvShow.poster_path ? `https://image.tmdb.org/t/p/w500${tvShow.poster_path}` : '',
-      backdrop: tvShow.backdrop_path ? `https://image.tmdb.org/t/p/original${tvShow.backdrop_path}` : '',
+      poster: tvShow.poster_path ? getPosterUrl(tvShow.poster_path) : '',
+      backdrop: tvShow.backdrop_path ? getBackdropUrl(tvShow.backdrop_path) : '',
     };
     onToggleWatchlist(mapped);
   };

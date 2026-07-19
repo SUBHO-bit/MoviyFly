@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Play, Heart, Share2, Star, Clock, Globe, CalendarCheck, Tv } from 'lucide-react';
 import { TMDBTVDetails } from '../../types/tv';
-import { getBackdropUrl, getPosterUrl } from '../../config/tmdb';
+import { getBackdropUrl, getPosterUrl, getLogoUrl } from '../../config/tmdb';
 import { TrailerButton } from '../movie/TrailerButton';
 
 interface TVHeroProps {
@@ -160,7 +160,7 @@ export const TVHero: React.FC<TVHeroProps> = ({
                     company.logo_path ? (
                       <div key={`${company.id || 'company'}-${idx}`} className="bg-white/5 rounded-md px-1.5 py-0.5 h-6 flex items-center justify-center border border-white/5" title={company.name}>
                         <img
-                          src={`https://image.tmdb.org/t/p/w92${company.logo_path}`}
+                          src={getLogoUrl(company.logo_path, 'w92')}
                           alt={company.name}
                           className="h-4 object-contain brightness-100"
                         />

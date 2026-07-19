@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { User } from 'lucide-react';
 import { tvService } from '../../services/tv.service';
-import { getPosterUrl } from '../../config/tmdb';
+import { getProfileUrl } from '../../config/tmdb';
 
 interface CastMember {
   id: number;
@@ -67,7 +67,7 @@ export const CastCarousel: React.FC<CastCarouselProps> = ({ tvId }) => {
       
       <div className="flex gap-4 overflow-x-auto pb-4 custom-scroll-area select-none snap-x">
         {cast.map((member, idx) => {
-          const profileImg = getPosterUrl(member.profile_path);
+          const profileImg = getProfileUrl(member.profile_path);
           return (
             <div
               key={`${member.id || 'cast'}-${idx}`}

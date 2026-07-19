@@ -13,6 +13,7 @@ import { LocalStorageManager } from './LocalStorageManager';
 import { PlayerController } from './PlayerController';
 import { updateClientSEO } from '../../lib/seo';
 import { generateMovieSchema, generateVideoObjectSchema, injectSchema, clearSchema } from '../../lib/schema';
+import { getBackdropUrl, getPosterUrl } from '../../config/tmdb';
 
 interface WatchPageProps {
   movieId: string;
@@ -86,7 +87,7 @@ export const WatchPage: React.FC<WatchPageProps> = ({
         url: typeof window !== 'undefined' ? window.location.href : '',
       });
     } else {
-      const image = movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : undefined);
+      const image = movie.backdrop_path ? getBackdropUrl(movie.backdrop_path) : (movie.poster_path ? getPosterUrl(movie.poster_path) : undefined);
       updateClientSEO({
         title: `Watch ${movie.title} Online | MoviyFly`,
         description: movie.overview || `Stream ${movie.title} full movie in premium HD quality.`,
@@ -100,7 +101,7 @@ export const WatchPage: React.FC<WatchPageProps> = ({
   // Schema.org structured data injection for movie watch page
   React.useEffect(() => {
     if (!loading && movie) {
-      const imageUrl = movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '');
+      const imageUrl = movie.backdrop_path ? getBackdropUrl(movie.backdrop_path) : (movie.poster_path ? getPosterUrl(movie.poster_path) : '');
       const productionCompany = movie.production_companies?.map((c: any) => c.name);
 
       const movieSchema = generateMovieSchema({

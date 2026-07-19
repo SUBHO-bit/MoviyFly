@@ -10,6 +10,7 @@ import { MovieData } from './MovieCard';
 import { navigate } from '../../lib/router';
 import { updateClientSEO, generateMovieJsonLd, generateTVSeriesJsonLd, generateBreadcrumbsJsonLd } from '../../lib/seo';
 import { generateMovieSchema, generateTVSeriesSchema, generateBreadcrumbListSchema, injectSchema, clearSchema } from '../../lib/schema';
+import { getProfileUrl } from '../../config/tmdb';
 
 interface MovieDetailsPageProps {
   movieId: string;
@@ -90,11 +91,11 @@ export const MovieDetailsPage: React.FC<MovieDetailsPageProps> = ({
       } else {
         const actors = credits?.cast?.slice(0, 10).map((actor: any) => ({
           name: actor.name,
-          image: actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : undefined,
+          image: actor.profile_path ? getProfileUrl(actor.profile_path) : undefined,
         }));
         const directors = credits?.crew?.filter((member: any) => member.job === 'Director').map((dir: any) => ({
           name: dir.name,
-          image: dir.profile_path ? `https://image.tmdb.org/t/p/w185${dir.profile_path}` : undefined,
+          image: dir.profile_path ? getProfileUrl(dir.profile_path) : undefined,
         }));
 
         jsonLd = generateMovieJsonLd({

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Play, ArrowRight, Clock } from 'lucide-react';
 import { tvService } from '../../services/tv.service';
 import { TMDBEpisode } from '../../types/tv';
+import { getStillUrl } from '../../config/tmdb';
 
 interface NextEpisodeCardProps {
   tvId: string;
@@ -76,9 +77,7 @@ export const NextEpisodeCard: React.FC<NextEpisodeCardProps> = ({
     return null; // Don't show anything if loading or if there's no next episode
   }
 
-  const thumbnail = nextEpisode.still_path
-    ? `https://image.tmdb.org/t/p/w500${nextEpisode.still_path}`
-    : '';
+  const thumbnail = getStillUrl(nextEpisode.still_path);
 
   const durationLabel = nextEpisode.runtime ? `${nextEpisode.runtime}m` : '';
 

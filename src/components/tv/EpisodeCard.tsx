@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Play, Calendar, Clock } from 'lucide-react';
 import { TMDBEpisode } from '../../types/tv';
-import { getPosterUrl } from '../../config/tmdb';
+import { getStillUrl } from '../../config/tmdb';
 
 interface EpisodeCardProps {
   episode: TMDBEpisode;
@@ -12,9 +12,7 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = ({
   episode,
   onPlay,
 }) => {
-  const thumbnail = episode.still_path 
-    ? `https://image.tmdb.org/t/p/w500${episode.still_path}`
-    : ''; // empty fallback so it displays an elegant placeholder
+  const thumbnail = getStillUrl(episode.still_path);
 
   const airYear = episode.air_date ? new Date(episode.air_date).toLocaleDateString(undefined, {
     year: 'numeric',

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Play, Heart, Share2, Star, Clock, X, Film, Volume2, VolumeX } from 'lucide-react';
 import { TMDBMovieDetails } from '../../types/movie';
-import { getBackdropUrl, getPosterUrl, TMDB_CONFIG } from '../../config/tmdb';
+import { getBackdropUrl, getPosterUrl, TMDB_CONFIG, getLogoUrl } from '../../config/tmdb';
 import { movieService } from '../../services/movie.service';
 import { tvService } from '../../services/tv.service';
 import { fetchFromTMDB } from '../../lib/api/tmdb';
@@ -149,7 +149,7 @@ export const MovieDetailsHero: React.FC<MovieDetailsHeroProps> = ({
             selectedLogo = data.logos.find(l => !l.iso_639_1) || data.logos[0];
           }
           if (selectedLogo && isMounted) {
-            setLogoUrl(`${TMDB_CONFIG.IMAGE_BASE_URL}/original${selectedLogo.file_path}`);
+            setLogoUrl(getLogoUrl(selectedLogo.file_path));
           } else if (isMounted) {
             setLogoUrl(null);
           }

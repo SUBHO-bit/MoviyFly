@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Play, Clock, Calendar, HelpCircle, Loader2 } from 'lucide-react';
 import { tvService } from '../../services/tv.service';
 import { TMDBEpisode } from '../../types/tv';
+import { getStillUrl } from '../../config/tmdb';
 
 interface EpisodeSelectorProps {
   tvId: string;
@@ -98,9 +99,7 @@ export const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
     <div className="grid grid-cols-1 gap-4 pt-2" id="watch-episodes-listing">
       {episodes.map((episode) => {
         const isPlaying = episode.episode_number === currentEpisodeNumber;
-        const thumbnail = episode.still_path 
-          ? `https://image.tmdb.org/t/p/w500${episode.still_path}`
-          : '';
+        const thumbnail = getStillUrl(episode.still_path);
 
         const airDateStr = episode.air_date 
           ? new Date(episode.air_date).toLocaleDateString(undefined, {

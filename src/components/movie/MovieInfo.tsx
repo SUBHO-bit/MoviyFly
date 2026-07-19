@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { DollarSign, Landmark, Globe2, Sparkles, Milestone, ThumbsUp, Layers } from 'lucide-react';
 import { TMDBMovieDetails } from '../../types/movie';
+import { getLogoUrl } from '../../config/tmdb';
 
 interface MovieInfoProps {
   movie: TMDBMovieDetails;
@@ -70,7 +71,7 @@ export const MovieInfo: React.FC<MovieInfoProps> = ({ movie }) => {
                   <div className="h-10 w-10 flex-shrink-0 bg-white/5 rounded-lg border border-white/10 flex items-center justify-center overflow-hidden p-1">
                     {company.logo_path ? (
                       <img
-                        src={`https://image.tmdb.org/t/p/w92${company.logo_path}`}
+                        src={getLogoUrl(company.logo_path, 'w92')}
                         alt={company.name}
                         referrerPolicy="no-referrer"
                         className="max-h-full max-w-full object-contain filter invert"

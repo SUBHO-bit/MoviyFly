@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { HeroContent } from './HeroContent';
 import { fetchFromTMDB } from '../../lib/api/tmdb';
+import { getLogoUrl } from '../../config/tmdb';
 
 export interface HeroSlideData {
   id: string;
@@ -73,7 +74,7 @@ export const HeroSlide: React.FC<HeroSlideProps> = ({
             // Find English logo if possible, otherwise first logo
             const englishLogo = res.logos.find((l) => l.iso_639_1 === 'en') || res.logos[0];
             if (englishLogo) {
-              setLogoUrl(`https://image.tmdb.org/t/p/original${englishLogo.file_path}`);
+              setLogoUrl(getLogoUrl(englishLogo.file_path));
             }
           }
         })
