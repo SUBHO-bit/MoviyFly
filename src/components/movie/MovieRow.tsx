@@ -5,7 +5,8 @@ import { MovieCard, MovieData } from './MovieCard';
 
 export interface MovieRowProps {
   title: string;
-  movies: MovieData[];
+  movies?: MovieData[];
+  fetchData?: () => Promise<MovieData[]>;
   onPlayMovie?: (movie: MovieData) => void;
   onMoreInfo?: (movie: MovieData) => void;
   onToggleWatchlist?: (movie: MovieData) => void;
@@ -18,6 +19,7 @@ export interface MovieRowProps {
 export const MovieRow: React.FC<MovieRowProps> = ({
   title,
   movies,
+  fetchData,
   onPlayMovie,
   onMoreInfo,
   onToggleWatchlist,
@@ -29,6 +31,8 @@ export const MovieRow: React.FC<MovieRowProps> = ({
   const rowRef = React.useRef<HTMLDivElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [isIntersected, setIsIntersected] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [localMovies, setLocalMovies] = React.useState<MovieData[]>(movies || []);
   const [showLeftArrow, setShowLeftArrow] = React.useState(false);
   const [showRightArrow, setShowRightArrow] = React.useState(true);
 
@@ -38,6 +42,13 @@ export const MovieRow: React.FC<MovieRowProps> = ({
   const [scrollLeftState, setScrollLeftState] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
 
+  // Sync prop movies to localMovies
+  React.useEffect(() => {
+    if (movies) {
+      setLocalMovies(movies);
+    }
+  }, [movies]);
+
   // Intersection observer to lazy render movie rows when scrolling close to viewport
   React.useEffect(() => {
     const observer = new IntersectionObserver(
@@ -45,9 +56,22 @@ export const MovieRow: React.FC<MovieRowProps> = ({
         if (entry.isIntersecting) {
           setIsIntersected(true);
           observer.disconnect();
+
+          if (fetchData && localMovies.length === 0) {
+            setLoading(true);
+            fetchData()
+              .then((data) => {
+                setLocalMovies(data);
+                setLoading(false);
+              })
+              .catch((err) => {
+                console.error(`Failed to fetch lazy row data for ${title}:`, err);
+                setLoading(false);
+              });
+          }
         }
       },
-      { rootMargin: '400px 0px' } // Pre-render 400px before scrolling into view
+      { rootMargin: '450px 0px' } // Pre-render 450px before scrolling into view
     );
 
     if (containerRef.current) {
@@ -55,7 +79,7 @@ export const MovieRow: React.FC<MovieRowProps> = ({
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [fetchData, localMovies.length, title]);
 
   const checkScrollPosition = () => {
     if (rowRef.current) {
@@ -140,7 +164,9 @@ export const MovieRow: React.FC<MovieRowProps> = ({
     }
   };
 
-  if (!isIntersected) {
+  const showSkeleton = !isIntersected || loading || localMovies.length === 0;
+
+  if (showSkeleton) {
     return (
       <div ref={containerRef} className={cn('flex flex-col gap-3 h-[310px] sm:h-[360px] md:h-[390px] justify-center', className)}>
         {!hideHeader && (
@@ -222,7 +248,7 @@ export const MovieRow: React.FC<MovieRowProps> = ({
           )}
           style={{ scrollbarWidth: 'none' }}
         >
-          {movies.map((movie) => {
+          {localMovies.map((movie) => {
             const movieIdStr = String(movie.id);
             const rawId = movieIdStr.replace('movie-', '').replace('tv-', '');
             const isInWatchlist = !!(

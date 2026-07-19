@@ -94,17 +94,15 @@ export const HeroSlide: React.FC<HeroSlideProps> = ({
         className
       )}
     >
-      {/* Background Image with slow Ken-Burns zoom and pan effect */}
+      {/* Background Image with slow Ken-Burns zoom effect (optimized for GPU/battery) */}
       <motion.img
         src={movie.backdrop}
         alt={movie.title}
         animate={shouldAnimateBackdrop ? {
-          scale: [1, 1.08, 1],
-          x: [0, 6, -6, 0],
-          y: [0, -3, 3, 0]
+          scale: [1, 1.03, 1]
         } : { scale: 1 }}
         transition={{
-          duration: 30,
+          duration: 25,
           repeat: Infinity,
           ease: 'easeInOut'
         }}

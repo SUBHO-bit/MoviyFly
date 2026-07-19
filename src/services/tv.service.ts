@@ -6,6 +6,7 @@ import { getPosterUrl, getBackdropUrl } from '../config/tmdb';
 
 const tvDetailsCache = new Map<string, Promise<MovieData>>();
 const fullTvDetailsCache = new Map<string, Promise<TMDBTVDetails>>();
+const tvListCache = new Map<string, Promise<MovieData[]>>();
 
 /**
  * High-fidelity, recursive/paginated TMDB fetcher that validates each returned TV show's required assets.
@@ -21,88 +22,99 @@ async function getValidTVWithPagination(
   targetCount: number = 20,
   maxPagesToFetch: number = 5
 ): Promise<MovieData[]> {
-  const accumulated: MovieData[] = [];
-  let page = startPage;
-  let fallbackUsed = false;
-  let fallbackReason = '';
+  const cacheKey = JSON.stringify({ endpoint, params, startPage, targetCount, maxPagesToFetch });
+  if (tvListCache.has(cacheKey)) {
+    console.log(`[Cache Hit] Returning cached promise for tv section: ${sectionName} (${endpoint})`);
+    return tvListCache.get(cacheKey)!;
+  }
 
-  while (accumulated.length < targetCount && page < startPage + maxPagesToFetch) {
-    try {
-      const data = await fetchFromTMDB<TMDBTVResponse>(endpoint, { ...params, page });
-      
-      if (!data || !data.results || data.results.length === 0) {
+  const promise = (async () => {
+    const accumulated: MovieData[] = [];
+    let page = startPage;
+    let fallbackUsed = false;
+    let fallbackReason = '';
+
+    while (accumulated.length < targetCount && page < startPage + maxPagesToFetch) {
+      try {
+        const data = await fetchFromTMDB<TMDBTVResponse>(endpoint, { ...params, page });
+        
+        if (!data || !data.results || data.results.length === 0) {
+          break;
+        }
+
+        for (const item of data.results) {
+          if (accumulated.length >= targetCount) break;
+
+          const mapped = mapTMDBTVToMovieData(item);
+          
+          let skipReason = '';
+          let isVal = true;
+
+          if (!item.name && !item.original_name) {
+            isVal = false;
+            skipReason = 'Missing title/name';
+          } else if (!item.poster_path || item.poster_path === 'null' || item.poster_path === 'undefined') {
+            isVal = false;
+            skipReason = 'poster_path is null, empty, or undefined';
+          } else if (!item.backdrop_path || item.backdrop_path === 'null' || item.backdrop_path === 'undefined') {
+            isVal = false;
+            skipReason = 'backdrop_path is null, empty, or undefined';
+          } else if (!item.overview || item.overview.trim() === '') {
+            isVal = false;
+            skipReason = 'overview is empty or missing';
+          } else if (!item.first_air_date || item.first_air_date.trim() === '') {
+            isVal = false;
+            skipReason = 'first_air_date is missing or invalid';
+          } else if (item.vote_average === undefined || item.vote_average === null) {
+            isVal = false;
+            skipReason = 'vote_average is undefined or null';
+          } else if (item.vote_count === undefined || item.vote_count === null) {
+            isVal = false;
+            skipReason = 'vote_count is undefined or null';
+          }
+
+          // Output extremely comprehensive console logging matching Task 7
+          console.log(`--- TMDB API TV VALIDATION LOG ---`);
+          console.log(`Section Name: ${sectionName}`);
+          console.log(`TMDB Endpoint: ${endpoint} (Page: ${page})`);
+          console.log(`TV ID: ${item.id}`);
+          console.log(`title/name: ${item.name || item.original_name}`);
+          console.log(`poster_path: ${item.poster_path || 'null'}`);
+          console.log(`backdrop_path: ${item.backdrop_path || 'null'}`);
+          console.log(`Generated Poster URL: ${mapped.poster}`);
+          console.log(`Generated Backdrop URL: ${mapped.backdrop}`);
+          if (!isVal) {
+            console.log(`Reason for skipping a movie: ${skipReason}`);
+          } else {
+            console.log(`Status: VALID (Included in section)`);
+          }
+          console.log(`-----------------------------------`);
+
+          if (isVal) {
+            if (!accumulated.some(m => m.id === mapped.id)) {
+              accumulated.push(mapped);
+            }
+          }
+        }
+      } catch (err: any) {
+        fallbackUsed = true;
+        fallbackReason = err.message || String(err);
+        console.log(`--- TMDB API TV REQUEST FAILURE ---`);
+        console.log(`Section Name: ${sectionName}`);
+        console.log(`TMDB Endpoint: ${endpoint}`);
+        console.log(`Reason for using fallback: TMDB Request Failed - ${fallbackReason}`);
+        console.log(`-------------------------------------`);
         break;
       }
 
-      for (const item of data.results) {
-        if (accumulated.length >= targetCount) break;
-
-        const mapped = mapTMDBTVToMovieData(item);
-        
-        let skipReason = '';
-        let isVal = true;
-
-        if (!item.name && !item.original_name) {
-          isVal = false;
-          skipReason = 'Missing title/name';
-        } else if (!item.poster_path || item.poster_path === 'null' || item.poster_path === 'undefined') {
-          isVal = false;
-          skipReason = 'poster_path is null, empty, or undefined';
-        } else if (!item.backdrop_path || item.backdrop_path === 'null' || item.backdrop_path === 'undefined') {
-          isVal = false;
-          skipReason = 'backdrop_path is null, empty, or undefined';
-        } else if (!item.overview || item.overview.trim() === '') {
-          isVal = false;
-          skipReason = 'overview is empty or missing';
-        } else if (!item.first_air_date || item.first_air_date.trim() === '') {
-          isVal = false;
-          skipReason = 'first_air_date is missing or invalid';
-        } else if (item.vote_average === undefined || item.vote_average === null) {
-          isVal = false;
-          skipReason = 'vote_average is undefined or null';
-        } else if (item.vote_count === undefined || item.vote_count === null) {
-          isVal = false;
-          skipReason = 'vote_count is undefined or null';
-        }
-
-        // Output extremely comprehensive console logging matching Task 7
-        console.log(`--- TMDB API TV VALIDATION LOG ---`);
-        console.log(`Section Name: ${sectionName}`);
-        console.log(`TMDB Endpoint: ${endpoint} (Page: ${page})`);
-        console.log(`TV ID: ${item.id}`);
-        console.log(`title/name: ${item.name || item.original_name}`);
-        console.log(`poster_path: ${item.poster_path || 'null'}`);
-        console.log(`backdrop_path: ${item.backdrop_path || 'null'}`);
-        console.log(`Generated Poster URL: ${mapped.poster}`);
-        console.log(`Generated Backdrop URL: ${mapped.backdrop}`);
-        if (!isVal) {
-          console.log(`Reason for skipping a movie: ${skipReason}`);
-        } else {
-          console.log(`Status: VALID (Included in section)`);
-        }
-        console.log(`-----------------------------------`);
-
-        if (isVal) {
-          if (!accumulated.some(m => m.id === mapped.id)) {
-            accumulated.push(mapped);
-          }
-        }
-      }
-    } catch (err: any) {
-      fallbackUsed = true;
-      fallbackReason = err.message || String(err);
-      console.log(`--- TMDB API TV REQUEST FAILURE ---`);
-      console.log(`Section Name: ${sectionName}`);
-      console.log(`TMDB Endpoint: ${endpoint}`);
-      console.log(`Reason for using fallback: TMDB Request Failed - ${fallbackReason}`);
-      console.log(`-------------------------------------`);
-      break;
+      page++;
     }
 
-    page++;
-  }
+    return accumulated;
+  })();
 
-  return accumulated;
+  tvListCache.set(cacheKey, promise);
+  return promise;
 }
 
 export const tvService = {
