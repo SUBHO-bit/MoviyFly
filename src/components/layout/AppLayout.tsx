@@ -1,10 +1,8 @@
 import * as React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { MainContent } from './MainContent';
 import { usePath, navigate } from '../../lib/router';
-import { CinematicSplash } from '../common/CinematicSplash';
 import { updateClientSEO, generateWebSiteJsonLd } from '../../lib/seo';
 import { generateWebSiteSchema, generateSearchActionSchema, injectSchema, clearSchema } from '../../lib/schema';
 
@@ -12,17 +10,8 @@ export const AppLayout: React.FC = () => {
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState('');
-  const [showIntro, setShowIntro] = React.useState(false);
   
   const path = usePath();
-
-  // Check if intro has been seen in this session
-  React.useEffect(() => {
-    const introSeen = sessionStorage.getItem('moviyfly_intro_seen');
-    if (!introSeen) {
-      setShowIntro(true);
-    }
-  }, []);
 
   // Sync search input value with URL search query parameter on back/forward or direct load
   React.useEffect(() => {
@@ -176,25 +165,6 @@ export const AppLayout: React.FC = () => {
         {/* Content body with dynamic name */}
         <MainContent pageTitle={activeItem} collapsed={collapsed} />
       </div>
-
-      {/* Premium Cinematic Splash Intro Overlay */}
-      <AnimatePresence>
-        {showIntro && (
-          <motion.div
-            key="moviyfly-cinematic-intro"
-            initial={{ opacity: 1 }}
-            exit={{ 
-              opacity: 0,
-              scale: 1.08,
-              filter: 'blur(15px)'
-            }}
-            transition={{ duration: 1.0, ease: [0.25, 1, 0.5, 1] }}
-            className="fixed inset-0 z-[9999]"
-          >
-            <CinematicSplash onComplete={() => setShowIntro(false)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
