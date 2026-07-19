@@ -517,8 +517,9 @@ export function handleMockRequest(targetPath: string, query: Record<string, stri
   }
 
   // 2. MOVIE DETAILS
-  if (targetPath.startsWith('movie/') && !targetPath.includes('/')) {
-    const id = parseInt(targetPath.split('/')[1]);
+  const parts = targetPath.split('/');
+  if (parts.length === 2 && parts[0] === 'movie') {
+    const id = parseInt(parts[1], 10);
     const movie = MOCK_MOVIES.find(m => m.id === id) || MOCK_MOVIES[0];
     return {
       ...movie,
@@ -527,8 +528,8 @@ export function handleMockRequest(targetPath: string, query: Record<string, stri
   }
 
   // 3. TV DETAILS
-  if (targetPath.startsWith('tv/') && !targetPath.includes('/')) {
-    const id = parseInt(targetPath.split('/')[1]);
+  if (parts.length === 2 && parts[0] === 'tv') {
+    const id = parseInt(parts[1], 10);
     const show = MOCK_TV.find(t => t.id === id) || MOCK_TV[0];
     return {
       ...show,
