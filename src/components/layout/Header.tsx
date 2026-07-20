@@ -91,7 +91,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Desktop Logo & Brand */}
           <div 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/home')}
             className="hidden md:flex items-center gap-2.5 cursor-pointer group select-none shrink-0"
           >
             <Logo variant="icon" color="purple" className="h-9 w-9 transition-transform duration-350 group-hover:scale-105" />
@@ -101,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Desktop Top Navigation Links */}
           <nav className="hidden md:flex items-center gap-6 select-none shrink-0">
             {[
-              { id: 'home', label: 'Home', path: '/' },
+              { id: 'home', label: 'Home', path: '/home' },
               { id: 'movies', label: 'Movies', path: '/movies' },
               { id: 'tvshows', label: 'TV Shows', path: '/tvshows' },
               { id: 'watchlist', label: 'Watchlist', path: '/watchlist' },
@@ -131,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({
           </nav>
 
           {/* Mobile Centered Branding Logo */}
-          <div className="flex md:hidden items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+          <div className="flex md:hidden items-center gap-2 cursor-pointer" onClick={() => navigate('/home')}>
             <Logo variant="icon" color="purple" className="h-7 w-7" />
             <Logo variant="full" color="white" className="h-4 w-auto" />
           </div>

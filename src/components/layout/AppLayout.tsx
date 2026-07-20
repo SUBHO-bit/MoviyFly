@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { MainContent } from './MainContent';
+import { LandingPage } from '../landing/LandingPage';
 import { usePath, navigate } from '../../lib/router';
 import { updateClientSEO, generateWebSiteJsonLd } from '../../lib/seo';
 import { generateWebSiteSchema, generateSearchActionSchema, injectSchema, clearSchema } from '../../lib/schema';
@@ -66,7 +67,7 @@ export const AppLayout: React.FC = () => {
 
   // Schema.org structured data injection for Homepage
   React.useEffect(() => {
-    if (path === '/') {
+    if (path === '/home') {
       const websiteSchema = generateWebSiteSchema();
       const searchActionSchema = generateSearchActionSchema();
 
@@ -132,6 +133,10 @@ export const AppLayout: React.FC = () => {
     });
   }, [activeItem, path]);
 
+  if (path === '/') {
+    return <LandingPage />;
+  }
+
   return (
     <div className="flex h-screen w-screen bg-background text-text-primary overflow-hidden relative">
       {/* Background glow effects */}
@@ -146,7 +151,7 @@ export const AppLayout: React.FC = () => {
         setMobileOpen={setMobileOpen}
         activeItem={activeItem}
         onItemSelect={(id) => {
-          navigate(id === 'home' ? '/' : `/${id}`);
+          navigate(id === 'home' ? '/home' : `/${id}`);
           setSearchValue(''); // reset search on tab change
         }}
       />
