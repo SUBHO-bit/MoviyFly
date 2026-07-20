@@ -67,6 +67,24 @@ async function generateFavicons() {
       .toFile(path.join(ASSETS_DIR, 'favicon-32x32.png'));
     console.log('  ✅ Generated assets/favicon-32x32.png');
 
+    // 48x48 Favicon (Google recommended multiple of 48)
+    await sharp(SOURCE_FILE)
+      .resize(48, 48)
+      .toFile(path.join(ASSETS_DIR, 'favicon-48x48.png'));
+    console.log('  ✅ Generated assets/favicon-48x48.png');
+
+    // 96x96 Favicon (Google recommended multiple of 48)
+    await sharp(SOURCE_FILE)
+      .resize(96, 96)
+      .toFile(path.join(ASSETS_DIR, 'favicon-96x96.png'));
+    console.log('  ✅ Generated assets/favicon-96x96.png');
+
+    // 144x144 Favicon (Google recommended multiple of 48)
+    await sharp(SOURCE_FILE)
+      .resize(144, 144)
+      .toFile(path.join(ASSETS_DIR, 'favicon-144x144.png'));
+    console.log('  ✅ Generated assets/favicon-144x144.png');
+
     // 180x180 Apple Touch Icon
     await sharp(SOURCE_FILE)
       .resize(180, 180)
