@@ -1,4 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+import fs from 'fs';
+import path from 'path';
+import sharp from 'sharp';
+
+const SVG_CONTENT = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <!-- Solid Black Background to match the uploaded reference -->
   <rect width="512" height="512" fill="#000000" />
   
@@ -113,3 +117,26 @@
     </g>
   </g>
 </svg>
+`;
+
+async function main() {
+  console.log('🦋 Generating high-resolution crystal butterfly vectors...');
+  
+  // Write to public/assets/logo.svg
+  fs.writeFileSync('public/assets/logo.svg', SVG_CONTENT);
+  console.log('  ✅ Wrote public/assets/logo.svg');
+
+  // Convert SVG to PNG at 512x512
+  await sharp('public/assets/logo.svg')
+    .resize(512, 512)
+    .png()
+    .toFile('public/favicon-source.png');
+  console.log('  ✅ Rendered public/favicon-source.png (512x512)');
+
+  // Run the existing favicon generation system
+  console.log('⚡ Triggering existing favicon assets generation system...');
+  const generateModule = await import('./generate-favicons.js');
+  console.log('✨ Favicon regeneration complete!');
+}
+
+main().catch(console.error);
