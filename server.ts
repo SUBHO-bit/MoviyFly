@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import dns from 'dns';
@@ -358,12 +359,179 @@ async function startServer() {
     }
   });
 
+  let viteInstance: any = null;
+
+  // Helper for dynamic Open Graph and Twitter Card metadata formatting
+  function formatImageUrl(imagePath: string | null | undefined): string {
+    if (!imagePath) {
+      return 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200';
+    }
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    return `https://image.tmdb.org/t/p/w1280${imagePath}`;
+  }
+
+  function getShortDescription(desc: string): string {
+    if (!desc) return 'Discover trending films, popular series, and build your personal watchlist on MoviyFly.';
+    if (desc.length <= 200) return desc;
+    return desc.substring(0, 197) + '...';
+  }
+
+  function injectMetaTags(html: string, meta: { title: string; description: string; image: string; url: string; type: string }): string {
+    let cleanedHtml = html;
+    cleanedHtml = cleanedHtml.replace(/<title>[^]*?<\/title>/gi, '');
+    cleanedHtml = cleanedHtml.replace(/<meta[^>]*?name="description"[^>]*?\/?>/gi, '');
+    cleanedHtml = cleanedHtml.replace(/<link[^>]*?rel="canonical"[^>]*?\/?>/gi, '');
+    cleanedHtml = cleanedHtml.replace(/<meta[^>]*?property="og:[^"]*"[^>]*?\/?>/gi, '');
+    cleanedHtml = cleanedHtml.replace(/<meta[^>]*?name="twitter:[^"]*"[^>]*?\/?>/gi, '');
+
+    const metaBlock = `
+    <title>${meta.title}</title>
+    <meta name="description" content="${meta.description.replace(/"/g, '&quot;')}" />
+    <link rel="canonical" href="${meta.url}" />
+    
+    <!-- Open Graph / Facebook / Discord / Telegram / WhatsApp -->
+    <meta property="og:title" content="${meta.title.replace(/"/g, '&quot;')}" />
+    <meta property="og:description" content="${meta.description.replace(/"/g, '&quot;')}" />
+    <meta property="og:type" content="${meta.type}" />
+    <meta property="og:url" content="${meta.url}" />
+    ${meta.image ? `<meta property="og:image" content="${meta.image}" />` : ''}
+    <meta property="og:site_name" content="MoviyFly" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${meta.title.replace(/"/g, '&quot;')}" />
+    <meta name="twitter:description" content="${meta.description.replace(/"/g, '&quot;')}" />
+    ${meta.image ? `<meta name="twitter:image" content="${meta.image}" />` : ''}
+    `.trim();
+
+    cleanedHtml = cleanedHtml.replace(/<head>/i, `<head>\n    ${metaBlock}`);
+    return cleanedHtml;
+  }
+
+  async function fetchMetadataForRoute(type: 'movie' | 'tv', idStr: string, token: string | undefined): Promise<{ title: string; description: string; image: string } | null> {
+    const idNum = parseInt(idStr, 10);
+    if (isNaN(idNum)) return null;
+
+    const targetPath = `${type}/${idStr}`;
+    const queryParamsObj = {};
+
+    if (isMockId(idStr) || !token) {
+      try {
+        const data = handleMockRequest(targetPath, queryParamsObj);
+        if (data) {
+          return {
+            title: data.title || data.name || (type === 'movie' ? 'Cinematic Movie' : 'Cinematic TV Show'),
+            description: data.overview || 'Watch on MoviyFly.',
+            image: data.backdrop_path || data.poster_path || ''
+          };
+        }
+      } catch (e) {
+        console.error(`Mock fallback failed for ${targetPath}:`, e);
+      }
+    }
+
+    if (token && !isMockId(idStr)) {
+      const tmdbUrl = `https://api.themoviedb.org/3/${targetPath}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+      try {
+        console.log(`[SEO Engine] Fetching live metadata from TMDB -> ${tmdbUrl}`);
+        const response = await fetch(tmdbUrl, {
+          headers: {
+            'Authorization': `Bearer ${token.trim()}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          return {
+            title: data.title || data.name || (type === 'movie' ? 'Cinematic Movie' : 'Cinematic TV Show'),
+            description: data.overview || 'Watch on MoviyFly.',
+            image: data.backdrop_path || data.poster_path || ''
+          };
+        }
+      } catch (err) {
+        clearTimeout(timeoutId);
+        console.error(`[SEO Engine] Live metadata fetch failed for ${targetPath}. Falling back.`, err);
+      }
+    }
+
+    // Final fallback to mock database
+    try {
+      const data = handleMockRequest(targetPath, queryParamsObj);
+      if (data) {
+        return {
+          title: data.title || data.name || (type === 'movie' ? 'Cinematic Movie' : 'Cinematic TV Show'),
+          description: data.overview || 'Watch on MoviyFly.',
+          image: data.backdrop_path || data.poster_path || ''
+        };
+      }
+    } catch (e) {
+      return {
+        title: type === 'movie' ? 'Cinematic Movie' : 'Cinematic TV Show',
+        description: 'Discover trending films, popular series, and build your personal watchlist on MoviyFly.',
+        image: ''
+      };
+    }
+
+    return null;
+  }
+
+  // SEO Meta injection route for details and watch pages
+  app.get(['/movie/:id', '/tv/:id', '/watch/movie/:id', '/watch/tv/:id'], async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const cleanId = id.replace('movie-', '').replace('tv-', '').split('-')[0];
+      const pathName = req.path;
+      const isTv = pathName.includes('/tv/') || pathName.includes('/watch/tv/');
+      const type = isTv ? 'tv' : 'movie';
+      const token = process.env.TMDB_READ_ACCESS_TOKEN || process.env.TMDB_ACCESS_TOKEN;
+
+      const metaData = await fetchMetadataForRoute(type, cleanId, token);
+      
+      const isProd = process.env.NODE_ENV === 'production';
+      let html = '';
+      if (!isProd) {
+        const indexTemplate = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf-8');
+        // Let Vite transform index.html so dev mode CSS and hot-reloads still work
+        html = await (viteInstance || app.get('vite')).transformIndexHtml(req.url, indexTemplate);
+      } else {
+        html = fs.readFileSync(path.resolve(process.cwd(), 'dist/index.html'), 'utf-8');
+      }
+
+      if (metaData) {
+        const meta = {
+          title: `${metaData.title} - MoviyFly`,
+          description: getShortDescription(metaData.description),
+          image: formatImageUrl(metaData.image),
+          url: `${req.protocol}://${req.get('host')}${req.originalUrl}`,
+          type: isTv ? 'video.tv_show' : 'video.movie'
+        };
+        html = injectMetaTags(html, meta);
+      }
+
+      res.set('Content-Type', 'text/html');
+      res.send(html);
+    } catch (err) {
+      console.error('Error in SEO meta injection:', err);
+      next(); // fallback to normal flow if something breaks
+    }
+  });
+
   // Vite integration
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
+    viteInstance = vite;
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
