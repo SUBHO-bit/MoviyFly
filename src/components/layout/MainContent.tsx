@@ -948,7 +948,7 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
           {/* First Line */}
           <div className="flex items-center justify-center gap-2.5 text-xs font-semibold text-text-secondary">
             <img
-              src="https://upload.wikimedia.org/wikipedia/commons/8/89/Tmdb.svg"
+              src="/assets/tmdb-logo.svg"
               alt="TMDB Logo"
               className="h-3.5 w-auto object-contain brightness-95"
               referrerPolicy="no-referrer"
