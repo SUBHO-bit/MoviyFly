@@ -8,6 +8,8 @@ interface PlayerControllerProps {
   onServerChange: (serverId: string) => void;
   tmdbId?: string | number;
   type?: 'movie' | 'tv';
+  season?: number;
+  episode?: number;
 }
 
 export const PlayerController: React.FC<PlayerControllerProps> = ({
@@ -15,11 +17,16 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
   onServerChange,
   tmdbId,
   type = 'movie',
+  season,
+  episode,
 }) => {
   const isTV = type === 'tv';
+  const sNum = season !== undefined && season !== null ? season : 1;
+  const eNum = episode !== undefined && episode !== null ? episode : 1;
+
   const downloadUrl = tmdbId
     ? isTV
-      ? `https://vidvault.ru/tv/${tmdbId}/1/1`
+      ? `https://vidvault.ru/tv/${tmdbId}/${sNum}/${eNum}`
       : `https://vidvault.ru/movie/${tmdbId}`
     : '';
 

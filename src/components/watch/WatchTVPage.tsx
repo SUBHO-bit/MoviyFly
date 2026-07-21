@@ -365,6 +365,8 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
         }}
         tmdbId={rawTmdbId}
         type="tv"
+        season={season}
+        episode={episode}
       />
 
       {/* Suggest Next Episode Card if possible */}
