@@ -8,7 +8,7 @@ import { WatchActions } from './WatchActions';
 import { RecommendationRow } from '../movie/RecommendationRow';
 import { SimilarMoviesRow } from '../movie/SimilarMoviesRow';
 import { mapTMDBMovieToMovieData } from '../../lib/api/mappers';
-import { navigate } from '../../lib/router';
+import { navigate, getDetailsPath } from '../../lib/router';
 import { LocalStorageManager } from './LocalStorageManager';
 import { PlayerController } from './PlayerController';
 import { updateClientSEO } from '../../lib/seo';
@@ -147,7 +147,11 @@ export const WatchPage: React.FC<WatchPageProps> = ({
   };
 
   const handleBackToDetails = () => {
-    navigate(`/movie/movie-${rawTmdbId}`);
+    if (movie) {
+      navigate(getDetailsPath(`movie-${rawTmdbId}`, movie.title), { replace: true });
+    } else {
+      navigate(`/movie/movie-${rawTmdbId}`, { replace: true });
+    }
   };
 
   const handleBackToCatalog = () => {
@@ -292,7 +296,7 @@ export const WatchPage: React.FC<WatchPageProps> = ({
             onPlayMovie={(m) => {
               navigate(`/watch/movie/${m.id.replace('movie-', '')}`);
             }}
-            onMoreInfo={(m) => navigate(`/movie/${m.id}`)}
+            onMoreInfo={(m) => navigate(getDetailsPath(m.id, m.title))}
             onToggleWatchlist={onToggleWatchlist}
           />
 
@@ -305,7 +309,7 @@ export const WatchPage: React.FC<WatchPageProps> = ({
             onPlayMovie={(m) => {
               navigate(`/watch/movie/${m.id.replace('movie-', '')}`);
             }}
-            onMoreInfo={(m) => navigate(`/movie/${m.id}`)}
+            onMoreInfo={(m) => navigate(getDetailsPath(m.id, m.title))}
             onToggleWatchlist={onToggleWatchlist}
           />
         </div>

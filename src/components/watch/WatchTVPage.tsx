@@ -11,7 +11,7 @@ import { NextEpisodeCard } from './NextEpisodeCard';
 import { ContinueWatchingManager } from './ContinueWatchingManager';
 import { RecommendationRow } from '../tv/RecommendationRow';
 import { SimilarSeriesRow } from '../tv/SimilarSeriesRow';
-import { navigate } from '../../lib/router';
+import { navigate, getDetailsPath } from '../../lib/router';
 import { LocalStorageManager } from './LocalStorageManager';
 import { PlayerController } from './PlayerController';
 import { updateClientSEO } from '../../lib/seo';
@@ -237,7 +237,11 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
   };
 
   const handleBackToDetails = () => {
-    navigate(`/tv/tv-${rawTmdbId}`);
+    if (tvShow) {
+      navigate(getDetailsPath(`tv-${rawTmdbId}`, tvShow.name), { replace: true });
+    } else {
+      navigate(`/tv/tv-${rawTmdbId}`, { replace: true });
+    }
   };
 
   const handleBackToCatalog = () => {
@@ -415,7 +419,7 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
             onPlayMovie={(m) => {
               navigate(`/watch/tv/${m.id.replace('tv-', '')}?season=1&episode=1`);
             }}
-            onMoreInfo={(m) => navigate(`/tv/${m.id}`)}
+            onMoreInfo={(m) => navigate(getDetailsPath(m.id, m.title))}
             onToggleWatchlist={onToggleWatchlist}
           />
 
@@ -427,7 +431,7 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
             onPlayMovie={(m) => {
               navigate(`/watch/tv/${m.id.replace('tv-', '')}?season=1&episode=1`);
             }}
-            onMoreInfo={(m) => navigate(`/tv/${m.id}`)}
+            onMoreInfo={(m) => navigate(getDetailsPath(m.id, m.title))}
             onToggleWatchlist={onToggleWatchlist}
           />
         </div>
