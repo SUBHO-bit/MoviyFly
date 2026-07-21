@@ -6,7 +6,7 @@ import { TVAdapter } from '../../lib/api/mediaAdapter';
 import { MediaItem } from '../../types/media';
 import { tvService } from '../../services/tv.service';
 import { MovieData } from '../movie/MovieCard';
-import { navigate } from '../../lib/router';
+import { navigate, getDetailsPath } from '../../lib/router';
 import { updateClientSEO, generateTVSeriesJsonLd, generateBreadcrumbsJsonLd } from '../../lib/seo';
 import { generateTVSeriesSchema, generateBreadcrumbListSchema, injectSchema, clearSchema } from '../../lib/schema';
 
@@ -49,6 +49,15 @@ export const TVDetailsPage: React.FC<TVDetailsPageProps> = ({
     fetchDetails();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [tvId, fetchDetails]);
+
+  React.useEffect(() => {
+    if (mediaItem) {
+      const canonicalPath = getDetailsPath(mediaItem.id, mediaItem.title);
+      if (window.location.pathname !== canonicalPath) {
+        navigate(canonicalPath, { replace: true });
+      }
+    }
+  }, [mediaItem]);
 
   React.useEffect(() => {
     if (mediaItem) {

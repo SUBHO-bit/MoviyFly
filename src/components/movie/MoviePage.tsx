@@ -7,7 +7,7 @@ import { MovieRowSkeleton } from './MovieRowSkeleton';
 import { MovieData } from './MovieCard';
 import { movieService } from '../../services/movie.service';
 import { heroService } from '../../services/hero.service';
-import { navigate } from '../../lib/router';
+import { navigate, getDetailsPath } from '../../lib/router';
 import { fetchFromTMDB } from '../../lib/api/tmdb';
 import { mapTMDBMovieToMovieData } from '../../lib/api/mappers';
 import { TMDBMovieResponse } from '../../types/movie';
@@ -291,11 +291,11 @@ export const MoviePage: React.FC<MoviePageProps> = ({
   }, [loadData]);
 
   const handlePlayMovie = (movie: MovieData) => {
-    navigate(`/movie/${movie.id}`);
+    navigate(getDetailsPath(movie.id, movie.title));
   };
 
   const handleMoreInfo = (movie: MovieData) => {
-    navigate(`/movie/${movie.id}`);
+    navigate(getDetailsPath(movie.id, movie.title));
   };
 
   return (

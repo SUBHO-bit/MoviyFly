@@ -1,9 +1,26 @@
 import * as React from 'react';
+import { slugify } from './sitemap';
 
-export function navigate(path: string) {
-  window.history.pushState({}, '', path);
+export function navigate(path: string, options?: { replace?: boolean }) {
+  const currentPath = window.location.pathname + window.location.search + window.location.hash;
+  if (currentPath === path) {
+    return;
+  }
+  if (options?.replace) {
+    window.history.replaceState({}, '', path);
+  } else {
+    window.history.pushState({}, '', path);
+  }
   const navEvent = new PopStateEvent('popstate');
   window.dispatchEvent(navEvent);
+}
+
+export function getDetailsPath(id: string | number, title: string): string {
+  const cleanId = String(id);
+  const isTv = cleanId.startsWith('tv-');
+  const prefix = isTv ? '/tv/' : '/movie/';
+  const titleSlug = slugify(title);
+  return `${prefix}${cleanId}-${titleSlug}`;
 }
 
 export function usePath(): string {

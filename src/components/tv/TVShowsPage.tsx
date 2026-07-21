@@ -6,7 +6,7 @@ import { MovieRow } from '../movie/MovieRow';
 import { MovieRowSkeleton } from '../movie/MovieRowSkeleton';
 import { MovieData } from '../movie/MovieCard';
 import { tvService } from '../../services/tv.service';
-import { navigate } from '../../lib/router';
+import { navigate, getDetailsPath } from '../../lib/router';
 
 interface TVShowsPageProps {
   collapsed?: boolean;
@@ -238,11 +238,11 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
   }, [loadData]);
 
   const handlePlayShow = (show: MovieData) => {
-    navigate(`/tv/${show.id}`);
+    navigate(getDetailsPath(show.id, show.title));
   };
 
   const handleMoreInfo = (show: MovieData) => {
-    navigate(`/tv/${show.id}`);
+    navigate(getDetailsPath(show.id, show.title));
   };
 
   return (

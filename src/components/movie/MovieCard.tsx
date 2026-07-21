@@ -3,8 +3,7 @@ import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { MoviePoster } from './MoviePoster';
 import { MovieMeta } from './MovieMeta';
-import { Link } from '../../lib/router';
-import { slugify } from '../../lib/sitemap';
+import { Link, getDetailsPath } from '../../lib/router';
 
 export interface MovieData {
   id: string;
@@ -39,10 +38,7 @@ export const MovieCard = React.memo<MovieCardProps>(({
   onToggleWatchlist,
   className,
 }) => {
-  const isTv = String(movie.id).startsWith('tv-');
-  const pathPrefix = isTv ? '/tv/' : '/movie/';
-  const titleSlug = slugify(movie.title);
-  const linkPath = `${pathPrefix}${movie.id}-${titleSlug}`;
+  const linkPath = getDetailsPath(movie.id, movie.title);
 
   return (
     <Link

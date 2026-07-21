@@ -10,7 +10,7 @@ import { TrendingSearches } from './TrendingSearches';
 import { fetchFromTMDB } from '../../lib/api/tmdb';
 import { mapTMDBMovieToMovieData, mapTMDBTVToMovieData } from '../../lib/api/mappers';
 import { getPosterUrl } from '../../config/tmdb';
-import { navigate, usePath } from '../../lib/router';
+import { navigate, usePath, getDetailsPath } from '../../lib/router';
 import { Search, Info, Sliders, Film, Sparkles, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -275,11 +275,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
 
   // Handle opening movie card
   const handleMoreInfo = (movie: MovieData) => {
-    if (movie.id.startsWith('tv-')) {
-      navigate(`/tv/${movie.id}`);
-    } else {
-      navigate(`/movie/${movie.id}`);
-    }
+    navigate(getDetailsPath(movie.id, movie.title));
   };
 
   return (

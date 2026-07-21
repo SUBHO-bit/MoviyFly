@@ -7,7 +7,7 @@ import { MediaItem } from '../../types/media';
 import { movieService } from '../../services/movie.service';
 import { tvService } from '../../services/tv.service';
 import { MovieData } from './MovieCard';
-import { navigate } from '../../lib/router';
+import { navigate, getDetailsPath } from '../../lib/router';
 import { updateClientSEO, generateMovieJsonLd, generateTVSeriesJsonLd, generateBreadcrumbsJsonLd } from '../../lib/seo';
 import { generateMovieSchema, generateTVSeriesSchema, generateBreadcrumbListSchema, injectSchema, clearSchema } from '../../lib/schema';
 import { getProfileUrl } from '../../config/tmdb';
@@ -69,6 +69,15 @@ export const MovieDetailsPage: React.FC<MovieDetailsPageProps> = ({
     // Scroll to top when media changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [movieId, fetchMediaDetails]);
+
+  React.useEffect(() => {
+    if (mediaItem) {
+      const canonicalPath = getDetailsPath(mediaItem.id, mediaItem.title);
+      if (window.location.pathname !== canonicalPath) {
+        navigate(canonicalPath, { replace: true });
+      }
+    }
+  }, [mediaItem]);
 
   React.useEffect(() => {
     if (mediaItem) {

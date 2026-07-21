@@ -33,7 +33,7 @@ const PageLoader: React.FC = () => (
   </div>
 );
 import { Logo } from '../common/Logo';
-import { getMovieIdFromPath, getTVIdFromPath, getMovieIdFromWatchPath, getTVIdFromWatchPath, navigate } from '../../lib/router';
+import { getMovieIdFromPath, getTVIdFromPath, getMovieIdFromWatchPath, getTVIdFromWatchPath, navigate, getDetailsPath } from '../../lib/router';
 import { useWatchlist } from '../../context/WatchlistContext';
 
 export interface MainContentProps {
@@ -439,19 +439,11 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
   }, [pageTitle]);
 
   const handlePlayMovie = (movie: MovieData) => {
-    if (String(movie.id).startsWith('tv-')) {
-      navigate(`/tv/${movie.id}`);
-    } else {
-      navigate(`/movie/${movie.id}`);
-    }
+    navigate(getDetailsPath(movie.id, movie.title));
   };
 
   const handleMoreInfo = (movie: MovieData) => {
-    if (String(movie.id).startsWith('tv-')) {
-      navigate(`/tv/${movie.id}`);
-    } else {
-      navigate(`/movie/${movie.id}`);
-    }
+    navigate(getDetailsPath(movie.id, movie.title));
   };
 
   const isHomeOrMovies = pageTitle === 'home' || pageTitle === 'movies' || pageTitle === 'tvshows' || pageTitle === 'watchlist' || pageTitle === 'movie-details' || pageTitle === 'tv-details';
