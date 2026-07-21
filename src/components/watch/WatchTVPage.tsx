@@ -363,6 +363,8 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
           setActiveServerId(serverId);
           LocalStorageManager.setPreferredServer(serverId);
         }}
+        tmdbId={rawTmdbId}
+        type="tv"
       />
 
       {/* Suggest Next Episode Card if possible */}

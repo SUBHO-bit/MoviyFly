@@ -263,6 +263,8 @@ export const WatchPage: React.FC<WatchPageProps> = ({
           setActiveServerId(serverId);
           LocalStorageManager.setPreferredServer(serverId);
         }}
+        tmdbId={rawTmdbId}
+        type="movie"
       />
 
       {/* Details & Actions below player */}
