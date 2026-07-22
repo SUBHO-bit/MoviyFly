@@ -2,7 +2,6 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Home,
-  Flame,
   Clapperboard,
   Tv,
   Theater,
@@ -42,7 +41,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const mainItems = [
     { id: 'home', label: 'Home', icon: <Home /> },
     { id: 'search', label: 'Search', icon: <Search /> },
-    { id: 'trending', label: 'Trending', icon: <Flame />, badge: 'Hot' },
     { id: 'movies', label: 'Movies', icon: <Clapperboard /> },
     { id: 'tvshows', label: 'TV Shows', icon: <Tv /> },
     { id: 'genres', label: 'Genres', icon: <Theater /> },
