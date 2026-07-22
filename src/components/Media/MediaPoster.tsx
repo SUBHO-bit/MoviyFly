@@ -20,6 +20,9 @@ export const MediaPoster: React.FC<MediaPosterProps> = ({ title, posterUrl }) =>
           alt={title || 'Media Poster'}
           referrerPolicy="no-referrer"
           loading="eager"
+          decoding="async"
+          width={342}
+          height={513}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
         />
       ) : (

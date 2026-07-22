@@ -109,7 +109,10 @@ export const HeroSlide: React.FC<HeroSlideProps> = ({
         className="absolute inset-0 w-full h-full object-cover object-center brightness-[0.85] contrast-[1.08] saturate-[1.05]"
         referrerPolicy="no-referrer"
         loading="eager"
+        decoding="async"
         fetchPriority={active ? "high" : "low"}
+        width={1280}
+        height={720}
         style={{
           objectPosition: 'center center',
           objectFit: 'cover'

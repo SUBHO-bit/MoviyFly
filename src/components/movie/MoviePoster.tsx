@@ -55,6 +55,8 @@ export const MoviePoster: React.FC<MoviePosterProps> = ({
           referrerPolicy="no-referrer"
           loading="lazy"
           decoding="async"
+          width={342}
+          height={513}
           onLoad={() => setLoaded(true)}
         />
       ) : (

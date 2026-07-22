@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { MainContent } from './MainContent';
-import { LandingPage } from '../landing/LandingPage';
+const LandingPage = React.lazy(() => import('../landing/LandingPage').then(m => ({ default: m.LandingPage })));
 import { usePath, navigate } from '../../lib/router';
 import { updateClientSEO, generateWebSiteJsonLd } from '../../lib/seo';
 import { generateWebSiteSchema, generateSearchActionSchema, injectSchema, clearSchema } from '../../lib/schema';
@@ -134,7 +134,11 @@ export const AppLayout: React.FC = () => {
   }, [activeItem, path]);
 
   if (path === '/') {
-    return <LandingPage />;
+    return (
+      <React.Suspense fallback={<div className="min-h-screen bg-[#0B0B10]" />}>
+        <LandingPage />
+      </React.Suspense>
+    );
   }
 
   return (

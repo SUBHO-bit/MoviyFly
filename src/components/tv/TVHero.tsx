@@ -51,6 +51,11 @@ export const TVHero: React.FC<TVHeroProps> = ({
           src={backdropUrl}
           alt={tvShow.name || 'TV Backdrop'}
           referrerPolicy="no-referrer"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+          width={1280}
+          height={720}
           className="w-full h-full object-cover opacity-35 object-top select-none"
         />
         {/* Cinematic multi-stop gradient mask */}
@@ -67,6 +72,9 @@ export const TVHero: React.FC<TVHeroProps> = ({
             alt={tvShow.name || 'TV Poster'}
             referrerPolicy="no-referrer"
             loading="eager"
+            decoding="async"
+            width={342}
+            height={513}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
           />
         </div>

@@ -68,6 +68,10 @@ export const HeroContent: React.FC<HeroContentProps> = ({
             alt={title}
             className="max-h-full max-w-full object-contain filter drop-shadow-[0_8px_24px_rgba(0,0,0,0.95)] transition-all duration-300"
             referrerPolicy="no-referrer"
+            loading="lazy"
+            decoding="async"
+            width={500}
+            height={150}
           />
         </div>
       ) : (

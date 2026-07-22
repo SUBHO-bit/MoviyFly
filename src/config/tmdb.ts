@@ -5,7 +5,7 @@ export const TMDB_CONFIG = {
   POSTER_SIZE: 'w342',    // Optimized from original
   PROFILE_SIZE: 'w185',   // Optimized from h632
   STILL_SIZE: 'w500',     // Optimized from original/w500
-  LOGO_SIZE: 'original',  // Vector logos keep crispness
+  LOGO_SIZE: 'w500',     // Responsive logo size (never original)
 };
 
 export const getBackdropUrl = (path: string | null | undefined, size: string = TMDB_CONFIG.BACKDROP_SIZE): string => {

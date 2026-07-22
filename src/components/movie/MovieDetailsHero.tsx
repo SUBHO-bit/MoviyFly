@@ -268,6 +268,11 @@ export const MovieDetailsHero: React.FC<MovieDetailsHeroProps> = ({
             src={backdropUrl}
             alt={movie.title || 'Movie Backdrop'}
             referrerPolicy="no-referrer"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            width={1280}
+            height={720}
             className="w-full h-full object-cover opacity-90 object-top"
             style={{
               filter: 'contrast(1.18) saturate(1.28) brightness(1.18)'
@@ -314,6 +319,9 @@ export const MovieDetailsHero: React.FC<MovieDetailsHeroProps> = ({
               alt={movie.title || 'Movie Poster'}
               referrerPolicy="no-referrer"
               loading="eager"
+              decoding="async"
+              width={342}
+              height={513}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
             />
             {/* Cinematic Movie Title Overlay directly on the movie poster */}
@@ -379,6 +387,10 @@ export const MovieDetailsHero: React.FC<MovieDetailsHeroProps> = ({
                     alt={movie.title || 'Movie Logo'}
                     className="max-h-full w-auto object-contain object-left filter brightness-110 contrast-110"
                     referrerPolicy="no-referrer"
+                    loading="lazy"
+                    decoding="async"
+                    width={500}
+                    height={150}
                   />
                 </motion.div>
               ) : (
