@@ -52,6 +52,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const sidebarContent = (isMobile: boolean = false) => {
     const isCollapsed = isMobile ? false : collapsed;
 
+    // Mobile drawer specific filtering: remove 'genres' and remove watchlist count badge
+    const navItems = isMobile
+      ? mainItems
+          .filter((item) => item.id !== 'genres')
+          .map((item) => (item.id === 'watchlist' ? { ...item, badge: undefined } : item))
+      : mainItems;
+
     return (
       <div className="h-full flex flex-col justify-between bg-transparent">
         {/* Header Area */}
@@ -63,7 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Scrollable Navigation Area - Vertically Centered */}
         <div className="flex-grow overflow-y-auto py-6 custom-scroll-area flex flex-col justify-center px-1">
           <div className="flex flex-col gap-1.5">
-            {mainItems.map((item) => (
+            {navItems.map((item) => (
               <SidebarItem
                 key={item.id}
                 icon={item.icon}
