@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Play, Heart, Share2, Star, Clock, Globe, CalendarCheck, Tv } from 'lucide-react';
 import { TMDBTVDetails } from '../../types/tv';
-import { getBackdropUrl, getPosterUrl, getLogoUrl } from '../../config/tmdb';
+import { getBackdropUrl, getPosterUrl, getLogoUrl, getBackdropSrcSet, getPosterSrcSet } from '../../config/tmdb';
 import { TrailerButton } from '../movie/TrailerButton';
 
 interface TVHeroProps {
@@ -49,6 +49,8 @@ export const TVHero: React.FC<TVHeroProps> = ({
       <div className="absolute inset-0 z-0">
         <img
           src={backdropUrl}
+          srcSet={getBackdropSrcSet(tvShow.backdrop_path)}
+          sizes="(max-width: 640px) 100vw, 1280px"
           alt={tvShow.name || 'TV Backdrop'}
           referrerPolicy="no-referrer"
           loading="eager"
@@ -69,6 +71,8 @@ export const TVHero: React.FC<TVHeroProps> = ({
         <div className="hidden md:block w-full aspect-[2/3] rounded-[24px] overflow-hidden bg-card border border-white/[0.08] shadow-2xl group cursor-pointer select-none">
           <img
             src={posterUrl}
+            srcSet={getPosterSrcSet(tvShow.poster_path)}
+            sizes="(max-width: 640px) 185px, 342px"
             alt={tvShow.name || 'TV Poster'}
             referrerPolicy="no-referrer"
             loading="eager"

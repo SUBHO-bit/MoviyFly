@@ -2,7 +2,7 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Play, Heart, Share2, Star, Clock, X, Film, Volume2, VolumeX } from 'lucide-react';
 import { TMDBMovieDetails } from '../../types/movie';
-import { getBackdropUrl, getPosterUrl, TMDB_CONFIG, getLogoUrl } from '../../config/tmdb';
+import { getBackdropUrl, getPosterUrl, TMDB_CONFIG, getLogoUrl, getBackdropSrcSet, getPosterSrcSet } from '../../config/tmdb';
 import { movieService } from '../../services/movie.service';
 import { tvService } from '../../services/tv.service';
 import { fetchFromTMDB } from '../../lib/api/tmdb';
@@ -266,6 +266,8 @@ export const MovieDetailsHero: React.FC<MovieDetailsHeroProps> = ({
         ) : (
           <img
             src={backdropUrl}
+            srcSet={getBackdropSrcSet(movie.backdrop_path)}
+            sizes="(max-width: 640px) 100vw, 1280px"
             alt={movie.title || 'Movie Backdrop'}
             referrerPolicy="no-referrer"
             loading="eager"
@@ -316,6 +318,8 @@ export const MovieDetailsHero: React.FC<MovieDetailsHeroProps> = ({
           >
             <img
               src={posterUrl}
+              srcSet={getPosterSrcSet(movie.poster_path)}
+              sizes="(max-width: 640px) 185px, 342px"
               alt={movie.title || 'Movie Poster'}
               referrerPolicy="no-referrer"
               loading="eager"

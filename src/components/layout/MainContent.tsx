@@ -250,12 +250,6 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
     setError(null);
     seenIdsRef.current = new Set();
     try {
-      // 1. First fetch dynamic movie and TV genres from TMDB in parallel
-      await Promise.allSettled([
-        movieService.fetchAndSetGenres(),
-        tvService.fetchAndSetTVGenres(),
-      ]);
-
       // Helper to fetch with a fallback to empty array on error so a single endpoint fail doesn't brick the app
       const fetchWithFallback = async <T,>(promise: Promise<T[]>, fallback: T[] = []): Promise<T[]> => {
         try {
@@ -266,30 +260,18 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
         }
       };
 
-      // 2. Fetch all required Stage 1 content sections in parallel
+      // Stage 1: Load essential initial viewport elements (Hero, Trending, Popular)
       const [
         detailedHero,
         trendingList,
-        bollywoodList,
-        southIndianList,
-        hollywoodList,
-        premiumTvList,
-        animeList,
-        kdramaList,
+        popularList,
       ] = await Promise.all([
         heroService.getHeroMoviePool(false),
         fetchWithFallback(movieService.getTrendingMovies()),
-        fetchWithFallback(movieService.getBollywoodMovies()),
-        fetchWithFallback(movieService.getSouthIndianMovies()),
-        fetchWithFallback(movieService.getHollywoodMovies()),
-        fetchWithFallback(tvService.getPremiumPlatformTV()),
-        fetchWithFallback(tvService.getAnime()),
-        fetchWithFallback(tvService.getKDramas()),
+        fetchWithFallback(movieService.getPopularMovies()),
       ]);
 
       setHeroMovies(detailedHero);
-
-      // Populate global set to prevent duplication
       detailedHero.forEach(m => seenIdsRef.current.add(m.id));
 
       // --- Row 1: 🔥 Trending Now ---
@@ -297,103 +279,109 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
       trendNow.forEach(m => seenIdsRef.current.add(m.id));
       setTrendingNow(trendNow);
 
-      // --- Row 2: 🇮🇳 Trending in India ---
-      const tIndia: MovieData[] = [];
-      const seenIndia = new Set<string>();
-      let bI = 0, sI = 0;
-      while (tIndia.length < 18 && (bI < bollywoodList.length || sI < southIndianList.length)) {
-        if (bI < bollywoodList.length && tIndia.length < 18) {
-          const m = bollywoodList[bI++];
-          if (m && !seenIdsRef.current.has(m.id) && !seenIndia.has(m.id)) {
-            tIndia.push(m);
-            seenIndia.add(m.id);
-            seenIdsRef.current.add(m.id);
-          }
-        }
-        if (sI < southIndianList.length && tIndia.length < 18) {
-          const m = southIndianList[sI++];
-          if (m && !seenIdsRef.current.has(m.id) && !seenIndia.has(m.id)) {
-            tIndia.push(m);
-            seenIndia.add(m.id);
-            seenIdsRef.current.add(m.id);
-          }
-        }
-      }
-      setTrendingInIndia(tIndia);
-
       // --- Row 3: 🌍 Trending Worldwide ---
-      const tWorld: MovieData[] = [];
-      const seenWorld = new Set<string>();
-      let hI = 0, bI2 = 0, oI = 0;
-      const otherList = [...animeList, ...kdramaList, ...premiumTvList];
-      while (tWorld.length < 18 && (hI < hollywoodList.length || bI2 < bollywoodList.length || oI < otherList.length)) {
-        if (hI < hollywoodList.length && tWorld.length < 18) {
-          const m = hollywoodList[hI++];
-          if (m && !seenIdsRef.current.has(m.id) && !seenWorld.has(m.id)) {
-            tWorld.push(m);
-            seenWorld.add(m.id);
-            seenIdsRef.current.add(m.id);
-          }
-        }
-        if (bI2 < bollywoodList.length && tWorld.length < 18) {
-          const m = bollywoodList[bI2++];
-          if (m && !seenIdsRef.current.has(m.id) && !seenWorld.has(m.id)) {
-            tWorld.push(m);
-            seenWorld.add(m.id);
-            seenIdsRef.current.add(m.id);
-          }
-        }
-        if (oI < otherList.length && tWorld.length < 18) {
-          const m = otherList[oI++];
-          if (m && !seenIdsRef.current.has(m.id) && !seenWorld.has(m.id)) {
-            tWorld.push(m);
-            seenWorld.add(m.id);
-            seenIdsRef.current.add(m.id);
-          }
-        }
-      }
+      const tWorld = popularList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
+      tWorld.forEach(m => seenIdsRef.current.add(m.id));
       setTrendingWorldwide(tWorld);
 
-      // --- Row 4: 🎥 Bollywood Blockbusters ---
-      const bBlockbusters = bollywoodList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
-      bBlockbusters.forEach(m => seenIdsRef.current.add(m.id));
-      setBollywoodBlockbusters(bBlockbusters);
-
-      // --- Row 5: 🎥 South Indian Hits ---
-      const sHits = southIndianList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
-      sHits.forEach(m => seenIdsRef.current.add(m.id));
-      setSouthIndianHits(sHits);
-
-      // --- Row 6: 🍿 Hindi Dubbed Movies ---
-      const hDubbed = [...hollywoodList, ...animeList]
-        .filter(m => !seenIdsRef.current.has(m.id) && m.language !== 'HI')
-        .slice(0, 18)
-        .map(m => ({ ...m, title: `${m.title} (Hindi Dubbed)` }));
-      hDubbed.forEach(m => seenIdsRef.current.add(m.id));
-      setHindiDubbedMovies(hDubbed);
-
-      // --- Row 10: 🍿 Hollywood Hits ---
-      const hWood = hollywoodList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
-      hWood.forEach(m => seenIdsRef.current.add(m.id));
-      setHollywoodHits(hWood);
-
-      // --- Row 11: 🔥 Trending Web Series ---
-      const pTv = premiumTvList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
-      pTv.forEach(m => seenIdsRef.current.add(m.id));
-      setTrendingWebSeries(pTv);
-
-      // --- Row 12: 🎌 Anime Collection ---
-      const anime = animeList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
-      anime.forEach(m => seenIdsRef.current.add(m.id));
-      setAnimeCollection(anime);
-
-      // --- Row 13: 🇰🇷 Korean Dramas ---
-      const kdrama = kdramaList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
-      kdrama.forEach(m => seenIdsRef.current.add(m.id));
-      setKoreanDramas(kdrama);
-
-      // --- INSTANT STATE TRANSITION FOR CORE VIEWPORTS ---
+      // Transition loading state to false immediately so viewport renders without delay
       setLoading(false);
+
+      // Stage 2: Deferred loading for remaining homepage rows during browser idle
+      const loadStage2 = async () => {
+        try {
+          await Promise.allSettled([
+            movieService.fetchAndSetGenres(),
+            tvService.fetchAndSetTVGenres(),
+          ]);
+
+          const [
+            bollywoodList,
+            southIndianList,
+            hollywoodList,
+            premiumTvList,
+            animeList,
+            kdramaList,
+          ] = await Promise.all([
+            fetchWithFallback(movieService.getBollywoodMovies()),
+            fetchWithFallback(movieService.getSouthIndianMovies()),
+            fetchWithFallback(movieService.getHollywoodMovies()),
+            fetchWithFallback(tvService.getPremiumPlatformTV()),
+            fetchWithFallback(tvService.getAnime()),
+            fetchWithFallback(tvService.getKDramas()),
+          ]);
+
+          // --- Row 2: 🇮🇳 Trending in India ---
+          const tIndia: MovieData[] = [];
+          const seenIndia = new Set<string>();
+          let bI = 0, sI = 0;
+          while (tIndia.length < 18 && (bI < bollywoodList.length || sI < southIndianList.length)) {
+            if (bI < bollywoodList.length && tIndia.length < 18) {
+              const m = bollywoodList[bI++];
+              if (m && !seenIdsRef.current.has(m.id) && !seenIndia.has(m.id)) {
+                tIndia.push(m);
+                seenIndia.add(m.id);
+                seenIdsRef.current.add(m.id);
+              }
+            }
+            if (sI < southIndianList.length && tIndia.length < 18) {
+              const m = southIndianList[sI++];
+              if (m && !seenIdsRef.current.has(m.id) && !seenIndia.has(m.id)) {
+                tIndia.push(m);
+                seenIndia.add(m.id);
+                seenIdsRef.current.add(m.id);
+              }
+            }
+          }
+          setTrendingInIndia(tIndia);
+
+          // --- Row 4: 🎥 Bollywood Blockbusters ---
+          const bBlockbusters = bollywoodList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
+          bBlockbusters.forEach(m => seenIdsRef.current.add(m.id));
+          setBollywoodBlockbusters(bBlockbusters);
+
+          // --- Row 5: 🎥 South Indian Hits ---
+          const sHits = southIndianList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
+          sHits.forEach(m => seenIdsRef.current.add(m.id));
+          setSouthIndianHits(sHits);
+
+          // --- Row 6: 🍿 Hindi Dubbed Movies ---
+          const hDubbed = [...hollywoodList, ...animeList]
+            .filter(m => !seenIdsRef.current.has(m.id) && m.language !== 'HI')
+            .slice(0, 18)
+            .map(m => ({ ...m, title: `${m.title} (Hindi Dubbed)` }));
+          hDubbed.forEach(m => seenIdsRef.current.add(m.id));
+          setHindiDubbedMovies(hDubbed);
+
+          // --- Row 10: 🍿 Hollywood Hits ---
+          const hWood = hollywoodList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
+          hWood.forEach(m => seenIdsRef.current.add(m.id));
+          setHollywoodHits(hWood);
+
+          // --- Row 11: 🔥 Trending Web Series ---
+          const pTv = premiumTvList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
+          pTv.forEach(m => seenIdsRef.current.add(m.id));
+          setTrendingWebSeries(pTv);
+
+          // --- Row 12: 🎌 Anime Collection ---
+          const anime = animeList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
+          anime.forEach(m => seenIdsRef.current.add(m.id));
+          setAnimeCollection(anime);
+
+          // --- Row 13: 🇰🇷 Korean Dramas ---
+          const kdrama = kdramaList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
+          kdrama.forEach(m => seenIdsRef.current.add(m.id));
+          setKoreanDramas(kdrama);
+        } catch (e) {
+          console.warn("Deferred Stage 2 fetch failed:", e);
+        }
+      };
+
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(() => loadStage2());
+      } else {
+        setTimeout(loadStage2, 120);
+      }
 
     } catch (err: any) {
       console.error('Error fetching TMDB data:', err);

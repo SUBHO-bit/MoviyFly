@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { motion } from 'motion/react';
+import { getPosterSrcSet } from '../../config/tmdb';
 
 interface MediaPosterProps {
   title: string;
@@ -17,6 +18,8 @@ export const MediaPoster: React.FC<MediaPosterProps> = ({ title, posterUrl }) =>
       {posterUrl ? (
         <img
           src={posterUrl}
+          srcSet={getPosterSrcSet(posterUrl)}
+          sizes="(max-width: 640px) 185px, 342px"
           alt={title || 'Media Poster'}
           referrerPolicy="no-referrer"
           loading="eager"

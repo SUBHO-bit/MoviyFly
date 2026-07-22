@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { HeroContent } from './HeroContent';
 import { fetchFromTMDB } from '../../lib/api/tmdb';
-import { getLogoUrl } from '../../config/tmdb';
+import { getLogoUrl, getBackdropSrcSet } from '../../config/tmdb';
 
 export interface HeroSlideData {
   id: string;
@@ -97,6 +97,8 @@ export const HeroSlide: React.FC<HeroSlideProps> = ({
       {/* Background Image with slow Ken-Burns zoom effect (optimized for GPU/battery) */}
       <motion.img
         src={movie.backdrop}
+        srcSet={getBackdropSrcSet(movie.backdrop)}
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1280px"
         alt={movie.title}
         animate={shouldAnimateBackdrop ? {
           scale: [1, 1.03, 1]

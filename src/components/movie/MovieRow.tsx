@@ -16,7 +16,7 @@ export interface MovieRowProps {
   hideHeader?: boolean;
 }
 
-export const MovieRow: React.FC<MovieRowProps> = ({
+export const MovieRow = React.memo<MovieRowProps>(({
   title,
   movies,
   fetchData,
@@ -277,4 +277,4 @@ export const MovieRow: React.FC<MovieRowProps> = ({
       </div>
     </div>
   );
-};
+});

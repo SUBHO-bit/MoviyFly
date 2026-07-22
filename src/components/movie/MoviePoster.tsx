@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { RatingBadge } from './RatingBadge';
 import { MovieActions } from './MovieActions';
+import { getPosterSrcSet } from '../../config/tmdb';
 
 export interface MoviePosterProps {
   title: string;
@@ -15,7 +16,7 @@ export interface MoviePosterProps {
   className?: string;
 }
 
-export const MoviePoster: React.FC<MoviePosterProps> = ({
+export const MoviePoster = React.memo<MoviePosterProps>(({
   title,
   posterUrl,
   rating,
@@ -47,6 +48,8 @@ export const MoviePoster: React.FC<MoviePosterProps> = ({
       {posterUrl ? (
         <img
           src={posterUrl}
+          srcSet={getPosterSrcSet(posterUrl)}
+          sizes="(max-width: 640px) 185px, 342px"
           alt={`${title} Poster`}
           className={cn(
             "w-full h-full object-cover select-none transition-all duration-500 ease-out group-hover/poster:scale-[1.03]",
@@ -94,4 +97,4 @@ export const MoviePoster: React.FC<MoviePosterProps> = ({
       </div>
     </div>
   );
-};
+});
