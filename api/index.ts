@@ -48,6 +48,19 @@ app.get('/api/health', (req, res) => {
 // TMDB API Proxy and Cache Layer
 app.all('/api/tmdb/*', async (req, res) => {
   const token = process.env.TMDB_READ_ACCESS_TOKEN || process.env.TMDB_ACCESS_TOKEN;
+
+  // Debug token inspection (safe - never prints full secret)
+  const trimmedToken = token ? token.trim() : '';
+  const tokenLength = trimmedToken.length;
+  const tokenPrefix = tokenLength >= 6 ? trimmedToken.slice(0, 6) : trimmedToken;
+  const tokenSuffix = tokenLength >= 4 ? trimmedToken.slice(-4) : trimmedToken;
+
+  console.log('[DEBUG TMDB TOKEN]');
+  console.log(`Token exists: ${Boolean(token)}`);
+  console.log(`Length: ${tokenLength}`);
+  console.log(`Prefix: ${tokenPrefix}`);
+  console.log(`Suffix: ${tokenSuffix}`);
+
   const targetPath = req.params[0] || '';
   const queryParamsObj: Record<string, string> = {};
   if (req.query) {
@@ -70,6 +83,7 @@ app.all('/api/tmdb/*', async (req, res) => {
 
   // Serve mock ID request directly
   if (clickedTmdbId && isMockId(clickedTmdbId)) {
+    console.log('[DEBUG MOCK REASON]: Mock ID requested directly (' + clickedTmdbId + ')');
     try {
       const fallbackData = handleMockRequest(targetPath, queryParamsObj);
       return res.json(fallbackData);
@@ -92,6 +106,7 @@ app.all('/api/tmdb/*', async (req, res) => {
   // Check circuit breaker
   if (isTmdbOffline && !hasValidTmdbId) {
     if (now - lastFailureTime < CIRCUIT_BREAKER_COOLDOWN) {
+      console.log('[DEBUG MOCK REASON]: Circuit breaker open');
       try {
         const fallbackData = handleMockRequest(targetPath, queryParamsObj);
         return res.json(fallbackData);
@@ -109,6 +124,7 @@ app.all('/api/tmdb/*', async (req, res) => {
 
   // Handle missing token
   if (!token) {
+    console.log('[DEBUG MOCK REASON]: Missing token');
     try {
       const fallbackData = handleMockRequest(targetPath, queryParamsObj);
       return res.json(fallbackData);
@@ -143,16 +159,27 @@ app.all('/api/tmdb/*', async (req, res) => {
     clearTimeout(timeoutId);
 
     responseStatus = response.status;
+    console.log(`TMDB Status: ${response.status}`);
     if (response.ok) {
       responseData = await response.json();
       responseOk = true;
     } else {
       fallbackReason = `TMDB non-OK: ${response.status} ${response.statusText}`;
+      console.log(`[DEBUG MOCK REASON]: TMDB returned ${response.status}`);
     }
   } catch (err: any) {
     clearTimeout(timeoutId);
-    responseStatus = err.name === 'AbortError' ? 'offline/timeout' : 'offline/network';
-    fallbackReason = 'network offline status';
+    if (err.name === 'AbortError') {
+      responseStatus = '408 / Fetch timeout';
+      console.log('TMDB Status: Fetch timeout');
+      console.log('[DEBUG MOCK REASON]: Fetch timeout');
+      fallbackReason = 'Fetch timeout';
+    } else {
+      responseStatus = 'Network Error';
+      console.log(`TMDB Status: Network error (${err.message})`);
+      console.log(`[DEBUG MOCK REASON]: Network error (${err.message})`);
+      fallbackReason = 'network offline status';
+    }
   }
 
   // Log proxy statistics
