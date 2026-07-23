@@ -358,6 +358,11 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
         title={tvShow.name}
         activeServerId={activeServerId}
         onBackToTVShow={handleBackToDetails}
+        onServerChange={(serverId) => {
+          setActiveServerId(serverId);
+          LocalStorageManager.setPreferredServer(serverId);
+        }}
+        tvShowDetails={tvShow}
       />
 
       {/* Multi-Server Controller */}

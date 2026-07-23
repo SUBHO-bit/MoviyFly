@@ -258,6 +258,11 @@ export const WatchPage: React.FC<WatchPageProps> = ({
         title={movie.title}
         activeServerId={activeServerId}
         onBackToMovie={handleBackToDetails}
+        onServerChange={(serverId) => {
+          setActiveServerId(serverId);
+          LocalStorageManager.setPreferredServer(serverId);
+        }}
+        movieDetails={movie}
       />
 
       {/* Multi-Server Controller */}

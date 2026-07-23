@@ -30,9 +30,10 @@ export const StreamingProvider = {
   ): string {
     const s = season || 1;
     const e = episode || 1;
+    const cleanId = tmdbId.replace('movie-', '').replace('tv-', '');
 
     switch (serverId) {
-      // SECTION 1: STREAMING SOURCE (Hidden to VidSrc API 1-4)
+      // SECTION 1: STREAMING SOURCE (VidSrc API 1-4)
       case 'server-a': // Server A -> VidSrc API 2
         return type === 'movie'
           ? `https://vidsrc.wtf/2/movie/${tmdbId}`
@@ -53,11 +54,11 @@ export const StreamingProvider = {
           ? `https://vidsrc.wtf/4/movie/${tmdbId}`
           : `https://vidsrc.wtf/4/tv/${tmdbId}/${s}/${e}`;
 
-      // SECTION 2: BACKUP SERVERS (Hidden to VidLove, VidNest, XPass, 2Embed)
-      case 'backup-1': // Server 1 -> VidLove
+      // SECTION 2: BACKUP SERVERS
+      case 'backup-1': // Server 1 -> Viduki (Replaced Vidlove)
         return type === 'movie'
-          ? `https://player.vidlove.cc/embed/movie/${tmdbId}`
-          : `https://player.vidlove.cc/embed/tv/${tmdbId}/${s}/${e}`;
+          ? `https://www.viduki.net/1/movie/${cleanId}?color=7c3aed`
+          : `https://www.viduki.net/1/tv/${cleanId}/${s}/${e}?color=7c3aed`;
 
       case 'backup-2': // Server 2 -> VidNest
         return type === 'movie'
@@ -75,10 +76,36 @@ export const StreamingProvider = {
           : `https://www.2embed.cc/embedtv/${tmdbId}&s=${s}&e=${e}`;
 
       default:
-        // Fallback to Server A (VidSrc API 2)
+        // Fallback to Server A
         return type === 'movie'
           ? `https://vidsrc.wtf/2/movie/${tmdbId}`
           : `https://vidsrc.wtf/2/tv/${tmdbId}/${s}/${e}`;
+    }
+  },
+
+  /**
+   * Automatic provider fallback progression
+   */
+  getNextServerId(currentServerId: string): string {
+    switch (currentServerId) {
+      case 'server-a':
+        return 'server-b';
+      case 'server-b':
+        return 'server-c';
+      case 'server-c':
+        return 'server-d';
+      case 'server-d':
+        return 'backup-1';
+      case 'backup-1':
+        return 'backup-2';
+      case 'backup-2':
+        return 'backup-3';
+      case 'backup-3':
+        return 'backup-4';
+      case 'backup-4':
+        return 'server-a';
+      default:
+        return 'server-a';
     }
   },
 };
