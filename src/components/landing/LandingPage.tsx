@@ -25,8 +25,13 @@ export const LandingPage: React.FC = () => {
 
   // Dynamically Inject SEO Metadata & JSON-LD schema on mount
   React.useEffect(() => {
+    const seoTitle = "MoviyFly - Stream Movies, TV Shows, Anime & K-Dramas";
+    const seoDesc = "Discover trending movies, TV shows, anime and K-dramas on MoviyFly. Browse thousands of titles, explore new releases, and enjoy a modern entertainment discovery platform.";
+    const canonicalUrl = "https://moviyfly.vercel.app/";
+    const ogImage = "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200";
+
     // 1. Title & Description
-    document.title = "Welcome to MoviyFly - Your Ultimate Movie & TV Show Discovery Platform";
+    document.title = seoTitle;
     
     let descMeta = document.querySelector('meta[name="description"]');
     if (!descMeta) {
@@ -34,7 +39,6 @@ export const LandingPage: React.FC = () => {
       descMeta.setAttribute('name', 'description');
       document.head.appendChild(descMeta);
     }
-    const seoDesc = "Discover trending movies, popular TV shows, new releases, top-rated entertainment, trailers, and build your personal watchlist on MoviyFly—the ultimate premium cinematic discovery platform.";
     descMeta.setAttribute('content', seoDesc);
 
     // 2. Canonical URL
@@ -44,8 +48,7 @@ export const LandingPage: React.FC = () => {
       canonicalLink.setAttribute('rel', 'canonical');
       document.head.appendChild(canonicalLink);
     }
-    const currentUrl = window.location.origin + "/";
-    canonicalLink.setAttribute('href', currentUrl);
+    canonicalLink.setAttribute('href', canonicalUrl);
 
     // 3. Open Graph Metadata
     const setOgMeta = (property: string, content: string) => {
@@ -58,10 +61,10 @@ export const LandingPage: React.FC = () => {
       meta.setAttribute('content', content);
     };
 
-    setOgMeta('og:title', "Welcome to MoviyFly - Your Ultimate Movie & TV Show Discovery Platform");
+    setOgMeta('og:title', seoTitle);
     setOgMeta('og:description', seoDesc);
-    setOgMeta('og:image', "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200");
-    setOgMeta('og:url', currentUrl);
+    setOgMeta('og:image', ogImage);
+    setOgMeta('og:url', canonicalUrl);
     setOgMeta('og:type', 'website');
     setOgMeta('og:site_name', 'MoviyFly');
 
@@ -77,9 +80,9 @@ export const LandingPage: React.FC = () => {
     };
 
     setTwitterMeta('twitter:card', 'summary_large_image');
-    setTwitterMeta('twitter:title', "Welcome to MoviyFly - Your Ultimate Movie & TV Show Discovery Platform");
+    setTwitterMeta('twitter:title', seoTitle);
     setTwitterMeta('twitter:description', seoDesc);
-    setTwitterMeta('twitter:image', "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200");
+    setTwitterMeta('twitter:image', ogImage);
 
     // 5. Inject Structured Data JSON-LD
     let schemaScript = document.getElementById('moviyfly-landing-schema') as HTMLScriptElement | null;
@@ -95,39 +98,36 @@ export const LandingPage: React.FC = () => {
       "@graph": [
         {
           "@type": "WebSite",
-          "@id": `${currentUrl}#website`,
-          "url": currentUrl,
+          "@id": `${canonicalUrl}#website`,
+          "url": canonicalUrl,
           "name": "MoviyFly",
           "description": seoDesc,
           "potentialAction": {
             "@type": "SearchAction",
-            "target": `${currentUrl}search?q={search_term_string}`,
+            "target": `${canonicalUrl}search?q={search_term_string}`,
             "query-input": "required name=search_term_string"
           },
           "inLanguage": "en"
         },
         {
           "@type": "Organization",
-          "@id": `${currentUrl}#organization`,
+          "@id": `${canonicalUrl}#organization`,
           "name": "MoviyFly",
-          "url": currentUrl,
+          "url": canonicalUrl,
           "logo": {
             "@type": "ImageObject",
-            "url": `${currentUrl}assets/logo.svg`
-          },
-          "sameAs": [
-            "https://github.com/dasram98081/moviyfly"
-          ]
+            "url": `${canonicalUrl}assets/logo.svg`
+          }
         },
         {
           "@type": "BreadcrumbList",
-          "@id": `${currentUrl}#breadcrumb`,
+          "@id": `${canonicalUrl}#breadcrumb`,
           "itemListElement": [
             {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": currentUrl
+              "item": canonicalUrl
             }
           ]
         }

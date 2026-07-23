@@ -86,41 +86,53 @@ export const AppLayout: React.FC = () => {
 
   // Synchronize general pages SEO metadata on route change
   React.useEffect(() => {
+    if (path === '/') {
+      // Landing page handles its own SEO metadata
+      return;
+    }
+
     if (activeItem === 'movie-details' || activeItem === 'tv-details' || activeItem === 'watch-movie' || activeItem === 'watch-tv') {
       // These details pages will manage their own highly detailed SEO metadata when details are loaded
       return;
     }
 
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://moviyfly1.onrender.com';
-    const currentUrl = path === '/' ? `${origin}/` : `${origin}${path}`;
+    let seoTitle = 'MoviyFly - Stream Movies, TV Shows, Anime & K-Dramas';
+    let seoDesc = 'Discover trending movies, TV shows, anime and K-dramas on MoviyFly. Browse thousands of titles, explore new releases, and enjoy a modern entertainment discovery platform.';
+    let currentUrl = 'https://moviyfly.vercel.app/';
 
-    let seoTitle = 'MoviyFly - Watch Movies & TV Shows Online';
-    let seoDesc = 'Watch trending movies and TV shows on MoviyFly. Discover new releases, top-rated films, popular series, and build your personal watchlist.';
-
-    if (activeItem === 'movies') {
+    if (activeItem === 'home' || path === '/home') {
+      seoTitle = 'Explore Movies, TV Shows & Anime Library | MoviyFly';
+      seoDesc = 'Browse popular movies, trending TV shows, anime and K-dramas. Discover thousands of titles on MoviyFly.';
+      currentUrl = 'https://moviyfly.vercel.app/home';
+    } else if (activeItem === 'movies') {
       seoTitle = 'All Movies - MoviyFly Cinema';
       seoDesc = 'Explore our extensive collection of Hollywood, Bollywood, South Indian, and world cinema hits on MoviyFly.';
+      currentUrl = 'https://moviyfly.vercel.app/movies';
     } else if (activeItem === 'tvshows') {
       seoTitle = 'TV Shows & Series - MoviyFly OTT';
       seoDesc = 'Binge watch premium TV shows, anime series, and Korean dramas in high quality on MoviyFly.';
+      currentUrl = 'https://moviyfly.vercel.app/tvshows';
     } else if (activeItem === 'watchlist') {
       seoTitle = 'My Cinema Watchlist - MoviyFly';
       seoDesc = 'Access your personal curated watchlist of movies and TV shows you want to watch on MoviyFly.';
+      currentUrl = 'https://moviyfly.vercel.app/watchlist';
     } else if (activeItem === 'search') {
       seoTitle = 'Search Movies & TV Shows - MoviyFly';
       seoDesc = 'Search the complete MoviyFly catalog for movies, TV series, actors, and directors.';
+      currentUrl = 'https://moviyfly.vercel.app/search';
     } else if (activeItem === 'category') {
       const categorySlug = window.location.pathname.substring(window.location.pathname.lastIndexOf('/') + 1);
       const categoryName = categorySlug ? categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1) : 'Genres';
       seoTitle = `${categoryName} Movies - MoviyFly`;
       seoDesc = `Explore the best of ${categoryName} movies and TV series curated specially for you on MoviyFly.`;
+      currentUrl = `https://moviyfly.vercel.app${path}`;
     }
 
     const websiteJsonLd = generateWebSiteJsonLd({
       name: "MoviyFly",
       alternateName: "MoviyFly Movies",
-      url: `${origin}/`,
-      description: "Watch Movies and TV Shows Online",
+      url: "https://moviyfly.vercel.app/",
+      description: seoDesc,
       inLanguage: "en"
     });
 
@@ -129,6 +141,7 @@ export const AppLayout: React.FC = () => {
       description: seoDesc,
       type: 'website',
       url: currentUrl,
+      image: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200",
       jsonLd: websiteJsonLd
     });
   }, [activeItem, path]);
