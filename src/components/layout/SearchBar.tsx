@@ -10,6 +10,7 @@ export interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onClear?: () => void;
+  onSelectResult?: () => void;
   isLoading?: boolean;
   variant?: 'default' | 'glass';
   autoFocus?: boolean;
@@ -19,6 +20,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChange,
   onClear,
+  onSelectResult,
   isLoading = false,
   variant = 'default',
   autoFocus = false,
@@ -146,6 +148,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         // Trigger full search page navigation
         const trimmed = value.trim();
         if (trimmed) {
+          onSelectResult?.();
           navigate(`/search?q=${encodeURIComponent(trimmed)}`);
           inputRef.current?.blur();
         }
@@ -167,6 +170,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     // Reset value if it's a direct navigation
     onChange('');
 
+    // Trigger close drawer / overlay callback BEFORE navigation
+    onSelectResult?.();
+
     if (item.type === 'movie') {
       navigate(`/movie/${item.id}`);
     } else if (item.type === 'tv') {
@@ -180,6 +186,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   const handleSelectHistoryTerm = (term: string) => {
     onChange(term);
+    onSelectResult?.();
     navigate(`/search?q=${encodeURIComponent(term)}`);
     setSuggestions([]);
     setIsFocused(false);

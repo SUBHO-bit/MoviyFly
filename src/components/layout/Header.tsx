@@ -45,6 +45,21 @@ export const Header: React.FC<HeaderProps> = ({
     };
   }, [isSearchExpanded]);
 
+  // Automatically close mobile search overlay whenever route, path or page changes
+  React.useEffect(() => {
+    const handlePopState = () => {
+      setMobileSearchOpen(false);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    setMobileSearchOpen(false);
+  }, [pageTitle]);
+
   const getHighlightedTab = (title: string) => {
     if (title === 'home') return 'home';
     if (title === 'movies' || title === 'movie-details' || title === 'watch-movie') return 'movies';
@@ -184,6 +199,7 @@ export const Header: React.FC<HeaderProps> = ({
                       variant="glass"
                       autoFocus={true}
                       onClear={() => onSearchChange('')}
+                      onSelectResult={() => setIsSearchExpanded(false)}
                     />
                   </motion.div>
                 )}
@@ -226,6 +242,7 @@ export const Header: React.FC<HeaderProps> = ({
                   onSearchChange(val);
                 }}
                 onClear={() => onSearchChange('')}
+                onSelectResult={() => setMobileSearchOpen(false)}
               />
             </div>
 
