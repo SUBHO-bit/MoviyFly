@@ -165,32 +165,32 @@ export const tvService = {
   /**
    * Fetch Premium Platform TV Shows (Netflix, Amazon, HBO, Disney+, Apple TV+)
    */
-  async getPremiumPlatformTV(page: number = 1): Promise<MovieData[]> {
+  async getPremiumPlatformTV(page: number = 1, targetCount: number = 20): Promise<MovieData[]> {
     return getValidTVWithPagination('Premium Platform TV', '/discover/tv', {
       with_networks: '213|1024|49|2739|2552',
       sort_by: 'popularity.desc'
-    }, page, 20);
+    }, page, targetCount);
   },
 
   /**
    * Fetch Japanese Anime TV Shows
    */
-  async getAnime(page: number = 1): Promise<MovieData[]> {
+  async getAnime(page: number = 1, targetCount: number = 20): Promise<MovieData[]> {
     return getValidTVWithPagination('Anime Series', '/discover/tv', {
       with_genres: 16,
       with_original_language: 'ja',
       sort_by: 'popularity.desc'
-    }, page, 20);
+    }, page, targetCount);
   },
 
   /**
    * Fetch Korean Dramas (K-Dramas)
    */
-  async getKDramas(page: number = 1): Promise<MovieData[]> {
+  async getKDramas(page: number = 1, targetCount: number = 20): Promise<MovieData[]> {
     return getValidTVWithPagination('Korean Dramas', '/discover/tv', {
       with_original_language: 'ko',
       sort_by: 'popularity.desc'
-    }, page, 20);
+    }, page, targetCount);
   },
 
   /**

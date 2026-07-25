@@ -261,15 +261,17 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
         }
       };
 
-      // Stage 1: Load essential initial viewport elements (Hero, Trending, Popular)
+      // Stage 1: Load essential initial viewport elements (Hero, Trending, Popular, Worldwide)
       const [
         detailedHero,
         trendingList,
         popularList,
+        worldwideList,
       ] = await Promise.all([
         heroService.getHeroMoviePool(false),
-        fetchWithFallback(movieService.getTrendingMovies()),
-        fetchWithFallback(movieService.getPopularMovies()),
+        fetchWithFallback(movieService.getTrendingMovies(1, 40)),
+        fetchWithFallback(movieService.getPopularMovies(1, 40)),
+        fetchWithFallback(movieService.getTrendingWorldwide(1, 40)),
       ]);
 
       setHeroMovies(detailedHero);
@@ -281,7 +283,26 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
       setTrendingNow(trendNow);
 
       // --- Row 3: 🌍 Trending Worldwide ---
-      const tWorld = popularList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
+      const tWorldCandidates = [...worldwideList, ...popularList];
+      const tWorld: MovieData[] = [];
+      const seenWorld = new Set<string>();
+      for (const m of tWorldCandidates) {
+        if (tWorld.length >= 18) break;
+        if (!seenIdsRef.current.has(m.id) && !seenWorld.has(m.id)) {
+          tWorld.push(m);
+          seenWorld.add(m.id);
+        }
+      }
+      // If deduplication against hero & trendingNow is too aggressive, guarantee a full row of 18 items
+      if (tWorld.length < 18) {
+        for (const m of tWorldCandidates) {
+          if (tWorld.length >= 18) break;
+          if (!seenWorld.has(m.id)) {
+            tWorld.push(m);
+            seenWorld.add(m.id);
+          }
+        }
+      }
       tWorld.forEach(m => seenIdsRef.current.add(m.id));
       setTrendingWorldwide(tWorld);
 
@@ -304,12 +325,12 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
             animeList,
             kdramaList,
           ] = await Promise.all([
-            fetchWithFallback(movieService.getBollywoodMovies()),
-            fetchWithFallback(movieService.getSouthIndianMovies()),
-            fetchWithFallback(movieService.getHollywoodMovies()),
-            fetchWithFallback(tvService.getPremiumPlatformTV()),
-            fetchWithFallback(tvService.getAnime()),
-            fetchWithFallback(tvService.getKDramas()),
+            fetchWithFallback(movieService.getBollywoodMovies(1, 40)),
+            fetchWithFallback(movieService.getSouthIndianMovies(1, 40)),
+            fetchWithFallback(movieService.getHollywoodMovies(1, 40)),
+            fetchWithFallback(tvService.getPremiumPlatformTV(1, 40)),
+            fetchWithFallback(tvService.getAnime(1, 40)),
+            fetchWithFallback(tvService.getKDramas(1, 40)),
           ]);
 
           // --- Row 2: 🇮🇳 Trending in India ---
@@ -347,7 +368,8 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
           setSouthIndianHits(sHits);
 
           // --- Row 6: 🍿 Hindi Dubbed Movies ---
-          const hDubbed = [...hollywoodList, ...animeList]
+          // Use Hollywood movies for Hindi Dubbed (do not pollute animeList)
+          const hDubbed = hollywoodList
             .filter(m => !seenIdsRef.current.has(m.id) && m.language !== 'HI')
             .slice(0, 18)
             .map(m => ({ ...m, title: `${m.title} (Hindi Dubbed)` }));
@@ -365,7 +387,24 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
           setTrendingWebSeries(pTv);
 
           // --- Row 12: 🎌 Anime Collection ---
-          const anime = animeList.filter(m => !seenIdsRef.current.has(m.id)).slice(0, 18);
+          const anime: MovieData[] = [];
+          const seenAnime = new Set<string>();
+          for (const m of animeList) {
+            if (anime.length >= 18) break;
+            if (!seenIdsRef.current.has(m.id) && !seenAnime.has(m.id)) {
+              anime.push(m);
+              seenAnime.add(m.id);
+            }
+          }
+          if (anime.length < 18) {
+            for (const m of animeList) {
+              if (anime.length >= 18) break;
+              if (!seenAnime.has(m.id)) {
+                anime.push(m);
+                seenAnime.add(m.id);
+              }
+            }
+          }
           anime.forEach(m => seenIdsRef.current.add(m.id));
           setAnimeCollection(anime);
 

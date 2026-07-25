@@ -121,43 +121,50 @@ export const movieService = {
   /**
    * Fetch Trending Movies (Daily)
    */
-  async getTrendingMovies(page: number = 1): Promise<MovieData[]> {
-    return getValidMoviesWithPagination('Trending Movies (Daily)', '/trending/movie/day', {}, page, 20);
+  async getTrendingMovies(page: number = 1, targetCount: number = 20): Promise<MovieData[]> {
+    return getValidMoviesWithPagination('Trending Movies (Daily)', '/trending/movie/day', {}, page, targetCount);
   },
 
   /**
    * Fetch Trending Movies (Weekly)
    */
-  async getWeeklyTrendingMovies(page: number = 1): Promise<MovieData[]> {
-    return getValidMoviesWithPagination('Trending Movies (Weekly)', '/trending/movie/week', {}, page, 20);
+  async getWeeklyTrendingMovies(page: number = 1, targetCount: number = 20): Promise<MovieData[]> {
+    return getValidMoviesWithPagination('Trending Movies (Weekly)', '/trending/movie/week', {}, page, targetCount);
   },
 
   /**
    * Fetch Popular Movies
    */
-  async getPopularMovies(page: number = 1): Promise<MovieData[]> {
-    return getValidMoviesWithPagination('Popular Movies', '/movie/popular', {}, page, 20);
+  async getPopularMovies(page: number = 1, targetCount: number = 20): Promise<MovieData[]> {
+    return getValidMoviesWithPagination('Popular Movies', '/movie/popular', {}, page, targetCount);
+  },
+
+  /**
+   * Fetch Trending Worldwide Movies across global cinema
+   */
+  async getTrendingWorldwide(page: number = 1, targetCount: number = 35): Promise<MovieData[]> {
+    return getValidMoviesWithPagination('Trending Worldwide', '/trending/movie/week', {}, page, targetCount);
   },
 
   /**
    * Fetch Top Rated Movies
    */
-  async getTopRatedMovies(page: number = 1): Promise<MovieData[]> {
-    return getValidMoviesWithPagination('Top Rated Movies', '/movie/top_rated', {}, page, 20);
+  async getTopRatedMovies(page: number = 1, targetCount: number = 20): Promise<MovieData[]> {
+    return getValidMoviesWithPagination('Top Rated Movies', '/movie/top_rated', {}, page, targetCount);
   },
 
   /**
    * Fetch Now Playing Movies
    */
-  async getNowPlayingMovies(page: number = 1): Promise<MovieData[]> {
-    return getValidMoviesWithPagination('Now Playing Movies', '/movie/now_playing', {}, page, 20);
+  async getNowPlayingMovies(page: number = 1, targetCount: number = 20): Promise<MovieData[]> {
+    return getValidMoviesWithPagination('Now Playing Movies', '/movie/now_playing', {}, page, targetCount);
   },
 
   /**
    * Fetch Upcoming Movies
    */
-  async getUpcomingMovies(page: number = 1): Promise<MovieData[]> {
-    return getValidMoviesWithPagination('Upcoming Movies', '/movie/upcoming', {}, page, 20);
+  async getUpcomingMovies(page: number = 1, targetCount: number = 20): Promise<MovieData[]> {
+    return getValidMoviesWithPagination('Upcoming Movies', '/movie/upcoming', {}, page, targetCount);
   },
 
   /**
@@ -181,41 +188,41 @@ export const movieService = {
   /**
    * Fetch Bollywood Movies (Hindi)
    */
-  async getBollywoodMovies(page: number = 1): Promise<MovieData[]> {
+  async getBollywoodMovies(page: number = 1, targetCount: number = 20): Promise<MovieData[]> {
     return getValidMoviesWithPagination('Bollywood Movies', '/discover/movie', {
       with_original_language: 'hi',
       sort_by: 'popularity.desc'
-    }, page, 20);
+    }, page, targetCount);
   },
 
   /**
    * Fetch South Indian Movies (Tamil, Telugu, Malayalam, Kannada)
    */
-  async getSouthIndianMovies(page: number = 1): Promise<MovieData[]> {
+  async getSouthIndianMovies(page: number = 1, targetCount: number = 20): Promise<MovieData[]> {
     return getValidMoviesWithPagination('South Indian Movies', '/discover/movie', {
       with_original_language: 'te|ta|ml|kn',
       sort_by: 'popularity.desc'
-    }, page, 20);
+    }, page, targetCount);
   },
 
   /**
    * Fetch Indian Movies (Bollywood & South Indian: Tamil, Telugu, Malayalam, Kannada)
    */
-  async getIndianMovies(page: number = 1): Promise<MovieData[]> {
+  async getIndianMovies(page: number = 1, targetCount: number = 20): Promise<MovieData[]> {
     return getValidMoviesWithPagination('Indian Movies', '/discover/movie', {
       with_original_language: 'hi|te|ta|ml|kn',
       sort_by: 'popularity.desc'
-    }, page, 20);
+    }, page, targetCount);
   },
 
   /**
    * Fetch Hollywood Movies (English)
    */
-  async getHollywoodMovies(page: number = 1): Promise<MovieData[]> {
+  async getHollywoodMovies(page: number = 1, targetCount: number = 20): Promise<MovieData[]> {
     return getValidMoviesWithPagination('Hollywood Movies', '/discover/movie', {
       with_original_language: 'en',
       sort_by: 'popularity.desc'
-    }, page, 20);
+    }, page, targetCount);
   },
 
   /**

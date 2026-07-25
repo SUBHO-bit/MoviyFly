@@ -109,13 +109,13 @@ export const MoviePage: React.FC<MoviePageProps> = ({
         southIndianRes,
       ] = await Promise.all([
         heroService.getHeroMoviePool(true),
-        fetchWithFallback(movieService.getWeeklyTrendingMovies()),
-        fetchWithFallback(movieService.getPopularMovies()),
-        fetchWithFallback(movieService.getTopRatedMovies()),
-        fetchWithFallback(movieService.getNowPlayingMovies()),
-        fetchWithFallback(movieService.getUpcomingMovies()),
-        fetchWithFallback(movieService.getBollywoodMovies()),
-        fetchWithFallback(movieService.getSouthIndianMovies()),
+        fetchWithFallback(movieService.getWeeklyTrendingMovies(1, 40)),
+        fetchWithFallback(movieService.getPopularMovies(1, 40)),
+        fetchWithFallback(movieService.getTopRatedMovies(1, 40)),
+        fetchWithFallback(movieService.getNowPlayingMovies(1, 40)),
+        fetchWithFallback(movieService.getUpcomingMovies(1, 40)),
+        fetchWithFallback(movieService.getBollywoodMovies(1, 40)),
+        fetchWithFallback(movieService.getSouthIndianMovies(1, 40)),
       ]);
 
       setHeroMovies(finalHero);
@@ -166,8 +166,8 @@ export const MoviePage: React.FC<MoviePageProps> = ({
         romanceRes,
         horrorRes,
       ] = await Promise.all([
-        fetchWithFallback(movieService.getIndianMovies()),
-        fetchWithFallback(movieService.getHollywoodMovies()),
+        fetchWithFallback(movieService.getIndianMovies(1, 40)),
+        fetchWithFallback(movieService.getHollywoodMovies(1, 40)),
         fetchWithFallback(movieService.getMoviesByGenre(28)), // Action
         fetchWithFallback(movieService.getMoviesByGenre(35)), // Comedy
         fetchWithFallback(movieService.getMoviesByGenre(10749)), // Romance
@@ -181,9 +181,25 @@ export const MoviePage: React.FC<MoviePageProps> = ({
 
       // Row 8: 🌍 Trending Worldwide
       // Strict Movies Worldwide (mixing Hollywood with top internationals)
-      const tWorld = [...hollywoodRes, ...trendingRes]
-        .filter(m => m && !seenIds.has(m.id) && m.language !== 'HI')
-        .slice(0, 18);
+      const tWorldCandidates = [...hollywoodRes, ...trendingRes, ...popularRes];
+      const tWorld: MovieData[] = [];
+      const seenWorld = new Set<string>();
+      for (const m of tWorldCandidates) {
+        if (tWorld.length >= 18) break;
+        if (m && !seenIds.has(m.id) && !seenWorld.has(m.id) && m.language !== 'HI') {
+          tWorld.push(m);
+          seenWorld.add(m.id);
+        }
+      }
+      if (tWorld.length < 18) {
+        for (const m of tWorldCandidates) {
+          if (tWorld.length >= 18) break;
+          if (m && !seenWorld.has(m.id)) {
+            tWorld.push(m);
+            seenWorld.add(m.id);
+          }
+        }
+      }
       tWorld.forEach(m => seenIds.add(m.id));
       setTrendingWorldwide(tWorld);
 
