@@ -11,6 +11,7 @@ import { navigate, getDetailsPath } from '../../lib/router';
 import { fetchFromTMDB } from '../../lib/api/tmdb';
 import { mapTMDBMovieToMovieData } from '../../lib/api/mappers';
 import { TMDBMovieResponse } from '../../types/movie';
+import { fillCategoryRow } from '../../lib/utils/backfill';
 
 interface MoviePageProps {
   collapsed?: boolean;
@@ -88,203 +89,98 @@ export const MoviePage: React.FC<MoviePageProps> = ({
       // 1. Warm genre cache
       await movieService.fetchAndSetGenres();
 
-      const fetchWithFallback = async <T,>(promise: Promise<T[]>, fallback: T[] = []): Promise<T[]> => {
-        try {
-          return await promise;
-        } catch (e) {
-          console.warn('Failed fetching movie page subset:', e);
-          return fallback;
-        }
-      };
-
-      // 2. STAGE 1: Fetch Hero search queries and primary lists in parallel
-      const [
-        finalHero,
-        trendingRes,
-        popularRes,
-        topRatedRes,
-        nowPlayingRes,
-        upcomingRes,
-        bollywoodRes,
-        southIndianRes,
-      ] = await Promise.all([
-        heroService.getHeroMoviePool(true),
-        fetchWithFallback(movieService.getWeeklyTrendingMovies(1, 40)),
-        fetchWithFallback(movieService.getPopularMovies(1, 40)),
-        fetchWithFallback(movieService.getTopRatedMovies(1, 40)),
-        fetchWithFallback(movieService.getNowPlayingMovies(1, 40)),
-        fetchWithFallback(movieService.getUpcomingMovies(1, 40)),
-        fetchWithFallback(movieService.getBollywoodMovies(1, 40)),
-        fetchWithFallback(movieService.getSouthIndianMovies(1, 40)),
-      ]);
-
-      setHeroMovies(finalHero);
-
-      // Save IDs to prevent duplicates in near-top rows
       const seenIds = new Set<string>();
+
+      // 2. STAGE 1: Fetch Hero and primary top rows
+      const finalHero = await heroService.getHeroMoviePool(true);
+      setHeroMovies(finalHero);
       finalHero.forEach(m => seenIds.add(m.id));
 
-      // Row 1: 🔥 Trending Movies
-      const trendList = trendingRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      trendList.forEach(m => seenIds.add(m.id));
+      const [
+        trendList,
+        popList,
+        topList,
+        playList,
+        upList,
+        bollyList,
+      ] = await Promise.all([
+        fillCategoryRow((p) => movieService.getWeeklyTrendingMovies(p), seenIds, 18),
+        fillCategoryRow((p) => movieService.getPopularMovies(p), seenIds, 18),
+        fillCategoryRow((p) => movieService.getTopRatedMovies(p), seenIds, 18),
+        fillCategoryRow((p) => movieService.getNowPlayingMovies(p), seenIds, 18),
+        fillCategoryRow((p) => movieService.getUpcomingMovies(p), seenIds, 18),
+        fillCategoryRow((p) => movieService.getBollywoodMovies(p), seenIds, 18),
+      ]);
+
       setTrendingMovies(trendList);
-
-      // Row 2: ⭐ Popular Movies
-      const popList = popularRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      popList.forEach(m => seenIds.add(m.id));
       setPopularMovies(popList);
-
-      // Row 3: 🏆 Top Rated Movies
-      const topList = topRatedRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      topList.forEach(m => seenIds.add(m.id));
       setTopRatedMovies(topList);
-
-      // Row 4: 🎬 Now Playing
-      const playList = nowPlayingRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      playList.forEach(m => seenIds.add(m.id));
       setNowPlayingMovies(playList);
-
-      // Row 5: 🎟️ Upcoming Movies
-      const upList = upcomingRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      upList.forEach(m => seenIds.add(m.id));
       setUpcomingMovies(upList);
-
-      // Row 6: 🎥 Bollywood Blockbusters
-      const bollyList = bollywoodRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      bollyList.forEach(m => seenIds.add(m.id));
       setBollywoodBlockbusters(bollyList);
 
       // --- INSTANT STAGE 1 FINISHED STATE ---
       setLoading(false);
 
-      // 3. STAGE 2: Fetch and construct specialized Indian & international rows
+      // 3. STAGE 2: Specialized Indian, International & Core Genre Rows
       const [
-        indianRes,
-        hollywoodRes,
-        actionRes,
-        comedyRes,
-        romanceRes,
-        horrorRes,
+        tIndia,
+        tWorld,
+        hWood,
+        act,
+        com,
+        rom,
       ] = await Promise.all([
-        fetchWithFallback(movieService.getIndianMovies(1, 40)),
-        fetchWithFallback(movieService.getHollywoodMovies(1, 40)),
-        fetchWithFallback(movieService.getMoviesByGenre(28)), // Action
-        fetchWithFallback(movieService.getMoviesByGenre(35)), // Comedy
-        fetchWithFallback(movieService.getMoviesByGenre(10749)), // Romance
-        fetchWithFallback(movieService.getMoviesByGenre(27)), // Horror
+        fillCategoryRow((p) => movieService.getIndianMovies(p), seenIds, 18),
+        fillCategoryRow((p) => movieService.getTrendingWorldwide(p), seenIds, 18, 6, m => m.language !== 'HI'),
+        fillCategoryRow((p) => movieService.getHollywoodMovies(p), seenIds, 18),
+        fillCategoryRow((p) => movieService.getMoviesByGenre(28, p), seenIds, 18), // Action
+        fillCategoryRow((p) => movieService.getMoviesByGenre(35, p), seenIds, 18), // Comedy
+        fillCategoryRow((p) => movieService.getMoviesByGenre(10749, p), seenIds, 18), // Romance
       ]);
 
-      // Row 7: 🇮🇳 Trending in India
-      const tIndia = indianRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      tIndia.forEach(m => seenIds.add(m.id));
       setTrendingInIndia(tIndia);
-
-      // Row 8: 🌍 Trending Worldwide
-      // Strict Movies Worldwide (mixing Hollywood with top internationals)
-      const tWorldCandidates = [...hollywoodRes, ...trendingRes, ...popularRes];
-      const tWorld: MovieData[] = [];
-      const seenWorld = new Set<string>();
-      for (const m of tWorldCandidates) {
-        if (tWorld.length >= 18) break;
-        if (m && !seenIds.has(m.id) && !seenWorld.has(m.id) && m.language !== 'HI') {
-          tWorld.push(m);
-          seenWorld.add(m.id);
-        }
-      }
-      if (tWorld.length < 18) {
-        for (const m of tWorldCandidates) {
-          if (tWorld.length >= 18) break;
-          if (m && !seenWorld.has(m.id)) {
-            tWorld.push(m);
-            seenWorld.add(m.id);
-          }
-        }
-      }
-      tWorld.forEach(m => seenIds.add(m.id));
       setTrendingWorldwide(tWorld);
-
-      // Row 9: 🍿 Hollywood Hits
-      const hWood = hollywoodRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      hWood.forEach(m => seenIds.add(m.id));
       setHollywoodHits(hWood);
-
-      // Row 10: 💥 Action Movies
-      const act = actionRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      act.forEach(m => seenIds.add(m.id));
       setActionMovies(act);
-
-      // Row 11: 😂 Comedy Movies
-      const com = comedyRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      com.forEach(m => seenIds.add(m.id));
       setComedyMovies(com);
-
-      // Row 12: ❤️ Romance Movies
-      const rom = romanceRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      rom.forEach(m => seenIds.add(m.id));
       setRomanceMovies(rom);
 
-      // 4. STAGE 3: Fetch and build the remaining specialized genre & theme rows
+      // 4. STAGE 3: Specialized Genre & Theme Rows
       const [
-        thrillerRes,
-        scifiRes,
-        familyRes,
-        crimeRes,
-        dramaRes,
-        superheroRawRes,
+        hor,
+        thr,
+        sci,
+        fam,
+        cri,
+        superheros,
+        dra,
       ] = await Promise.all([
-        fetchWithFallback(movieService.getMoviesByGenre(53)), // Thriller
-        fetchWithFallback(movieService.getMoviesByGenre(878)), // Sci-Fi
-        fetchWithFallback(movieService.getMoviesByGenre(10751)), // Family
-        fetchWithFallback(movieService.getMoviesByGenre(80)), // Crime
-        fetchWithFallback(movieService.getMoviesByGenre(18)), // Drama
-        fetchWithFallback(
-          fetchFromTMDB<TMDBMovieResponse>('/discover/movie', {
-            with_genres: '28|12|878',
-            sort_by: 'popularity.desc',
-            page: 1,
-          }).then(r => r.results.map(mapTMDBMovieToMovieData))
-        ),
+        fillCategoryRow((p) => movieService.getMoviesByGenre(27, p), seenIds, 18), // Horror
+        fillCategoryRow((p) => movieService.getMoviesByGenre(53, p), seenIds, 18), // Thriller
+        fillCategoryRow((p) => movieService.getMoviesByGenre(878, p), seenIds, 18), // Sci-Fi
+        fillCategoryRow((p) => movieService.getMoviesByGenre(10751, p), seenIds, 18), // Family
+        fillCategoryRow((p) => movieService.getMoviesByGenre(80, p), seenIds, 18), // Crime
+        fillCategoryRow((p) => fetchFromTMDB<TMDBMovieResponse>('/discover/movie', {
+          with_genres: '28|12|878',
+          sort_by: 'popularity.desc',
+          page: p,
+        }).then(r => r.results.map(mapTMDBMovieToMovieData)), seenIds, 18), // Superhero
+        fillCategoryRow((p) => movieService.getMoviesByGenre(18, p), seenIds, 18), // Drama
       ]);
 
-      // Row 13: 😱 Horror Movies
-      const hor = horrorRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      hor.forEach(m => seenIds.add(m.id));
       setHorrorMovies(hor);
-
-      // Row 14: 🧠 Thriller Movies
-      const thr = thrillerRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      thr.forEach(m => seenIds.add(m.id));
       setThrillerMovies(thr);
-
-      // Row 15: 🚀 Sci-Fi Movies
-      const sci = scifiRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      sci.forEach(m => seenIds.add(m.id));
       setScifiMovies(sci);
-
-      // Row 16: 👨‍👩‍👧 Family Movies
-      const fam = familyRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      fam.forEach(m => seenIds.add(m.id));
       setFamilyMovies(fam);
-
-      // Row 17: 🕵 Crime Movies
-      const cri = crimeRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      cri.forEach(m => seenIds.add(m.id));
       setCrimeMovies(cri);
-
-      // Row 18: 🦸 Superhero Movies
-      const superheros = superheroRawRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      superheros.forEach(m => seenIds.add(m.id));
       setSuperheroMovies(superheros);
-
-      // Row 19: 🎭 Drama Movies
-      const dra = dramaRes.filter(m => !seenIds.has(m.id)).slice(0, 18);
-      dra.forEach(m => seenIds.add(m.id));
       setDramaMovies(dra);
 
       // Row 20: 🎖 Oscar Winners (Highly-rated, popular masterpieces)
       const oscars = topList
         .concat(popList)
-        .filter(m => parseFloat(String(m.rating)) >= 7.8)
+        .filter(m => parseFloat(String(m.rating)) >= 7.5)
         .slice(0, 18);
       setOscarWinners(oscars);
 

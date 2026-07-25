@@ -7,6 +7,7 @@ import { MovieRowSkeleton } from '../movie/MovieRowSkeleton';
 import { MovieData } from '../movie/MovieCard';
 import { tvService } from '../../services/tv.service';
 import { navigate, getDetailsPath } from '../../lib/router';
+import { fillCategoryRow } from '../../lib/utils/backfill';
 
 interface TVShowsPageProps {
   collapsed?: boolean;
@@ -127,67 +128,43 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
       // Warm up TV genre definitions synchronously
       await tvService.fetchAndSetTVGenres();
 
-      const fetchWithFallback = async <T,>(promise: Promise<T[]>, fallback: T[] = []): Promise<T[]> => {
-        try {
-          return await promise;
-        } catch (e) {
-          console.warn('Failed fetching TV subset:', e);
-          return fallback;
-        }
+      const fetchTvRow = (fetcher: (p: number) => Promise<MovieData[]>) => async (p: number) => {
+        const raw = await fetcher(p);
+        return mapWithSeasons(raw);
       };
-
-      // STAGE 1: Fetch Hero search query sets and core top rows in parallel
-      const [
-        heroPool,
-        trendingRes,
-        airingTodayRes,
-        topRatedRes,
-        indianRes,
-        internationalRes
-      ] = await Promise.all([
-        tvService.getHeroTVPool(),
-        fetchWithFallback(tvService.getWeeklyTrendingTV()),
-        fetchWithFallback(tvService.getAiringToday()),
-        fetchWithFallback(tvService.getTopRatedTV()),
-        fetchWithFallback(tvService.getIndianTVSeries()),
-        fetchWithFallback(tvService.getInternationalTVSeries())
-      ]);
 
       const seenIds = new Set<string>();
 
+      // STAGE 1: Fetch Hero and primary top TV rows
+      const heroPool = await tvService.getHeroTVPool();
       const finalHero = mapWithSeasons(heroPool);
       setHeroShows(finalHero);
       finalHero.forEach(m => seenIds.add(m.id));
 
-      // Row 1: 🔥 Trending TV Shows
-      const trendList = mapWithSeasons(trendingRes).filter(m => !seenIds.has(m.id)).slice(0, 18);
-      trendList.forEach(m => seenIds.add(m.id));
+      const [
+        trendList,
+        airList,
+        topList,
+        indList,
+        intList,
+      ] = await Promise.all([
+        fillCategoryRow(fetchTvRow((p) => tvService.getWeeklyTrendingTV(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getAiringToday(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getTopRatedTV(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getIndianTVSeries(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getInternationalTVSeries(p)), seenIds, 18),
+      ]);
+
       setTrendingTV(trendList);
-
-      // Row 2: 📺 Airing Today
-      const airList = mapWithSeasons(airingTodayRes).filter(m => !seenIds.has(m.id)).slice(0, 18);
-      airList.forEach(m => seenIds.add(m.id));
       setAiringToday(airList);
-
-      // Row 3: ⭐ Top Rated Series
-      const topList = mapWithSeasons(topRatedRes).filter(m => !seenIds.has(m.id)).slice(0, 18);
-      topList.forEach(m => seenIds.add(m.id));
       setTopRatedTV(topList);
-
-      // Row 4: 🇮🇳 Indian Web Series
-      const indList = mapWithSeasons(indianRes).filter(m => !seenIds.has(m.id)).slice(0, 18);
-      indList.forEach(m => seenIds.add(m.id));
       setIndianTV(indList);
-
-      // Row 5: 🌍 International Series
-      const intList = mapWithSeasons(internationalRes).filter(m => !seenIds.has(m.id)).slice(0, 18);
-      intList.forEach(m => seenIds.add(m.id));
       setInternationalTV(intList);
 
-      // Complete primary load state quickly to display high performance UI
+      // Complete primary load state quickly
       setLoading(false);
 
-      // STAGE 2: Fetch platform specific collections asynchronously to build highly categorized bento layouts
+      // STAGE 2: Platform-specific collections & genre categories
       const [
         netflixRes,
         appleTVRes,
@@ -199,32 +176,32 @@ export const TVShowsPage: React.FC<TVShowsPageProps> = ({
         comedyRes,
         crimeRes,
         romanceRes,
-        actionRes
+        actionRes,
       ] = await Promise.all([
-        fetchWithFallback(tvService.getNetflixOriginals()),
-        fetchWithFallback(tvService.getAppleTVOriginals()),
-        fetchWithFallback(tvService.getHBOOriginals()),
-        fetchWithFallback(tvService.getDisneyOriginals()),
-        fetchWithFallback(tvService.getPrimeOriginals()),
-        fetchWithFallback(tvService.getSciFiSeries()),
-        fetchWithFallback(tvService.getHorrorSeries()),
-        fetchWithFallback(tvService.getComedySeries()),
-        fetchWithFallback(tvService.getCrimeMysterySeries()),
-        fetchWithFallback(tvService.getRomanceSeries()),
-        fetchWithFallback(tvService.getActionSeries())
+        fillCategoryRow(fetchTvRow((p) => tvService.getNetflixOriginals(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getAppleTVOriginals(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getHBOOriginals(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getDisneyOriginals(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getPrimeOriginals(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getSciFiSeries(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getHorrorSeries(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getComedySeries(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getCrimeMysterySeries(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getRomanceSeries(p)), seenIds, 18),
+        fillCategoryRow(fetchTvRow((p) => tvService.getActionSeries(p)), seenIds, 18),
       ]);
 
-      setNetflixOriginals(mapWithSeasons(netflixRes).filter(m => !seenIds.has(m.id)).slice(0, 18));
-      setAppleTVOriginals(mapWithSeasons(appleTVRes).filter(m => !seenIds.has(m.id)).slice(0, 18));
-      setHBOOriginals(mapWithSeasons(hboRes).filter(m => !seenIds.has(m.id)).slice(0, 18));
-      setDisneyOriginals(mapWithSeasons(disneyRes).filter(m => !seenIds.has(m.id)).slice(0, 18));
-      setPrimeOriginals(mapWithSeasons(primeRes).filter(m => !seenIds.has(m.id)).slice(0, 18));
-      setSciFiSeries(mapWithSeasons(sciFiRes).filter(m => !seenIds.has(m.id)).slice(0, 18));
-      setHorrorSeries(mapWithSeasons(horrorRes).filter(m => !seenIds.has(m.id)).slice(0, 18));
-      setComedySeries(mapWithSeasons(comedyRes).filter(m => !seenIds.has(m.id)).slice(0, 18));
-      setCrimeMystery(mapWithSeasons(crimeRes).filter(m => !seenIds.has(m.id)).slice(0, 18));
-      setRomanceSeries(mapWithSeasons(romanceRes).filter(m => !seenIds.has(m.id)).slice(0, 18));
-      setActionSeries(mapWithSeasons(actionRes).filter(m => !seenIds.has(m.id)).slice(0, 18));
+      setNetflixOriginals(netflixRes);
+      setAppleTVOriginals(appleTVRes);
+      setHBOOriginals(hboRes);
+      setDisneyOriginals(disneyRes);
+      setPrimeOriginals(primeRes);
+      setSciFiSeries(sciFiRes);
+      setHorrorSeries(horrorRes);
+      setComedySeries(comedyRes);
+      setCrimeMystery(crimeRes);
+      setRomanceSeries(romanceRes);
+      setActionSeries(actionRes);
 
     } catch (err: any) {
       console.error('Error fetching TMDB TV Shows page data:', err);

@@ -396,11 +396,11 @@ export const tvService = {
   },
 
   /**
-   * Fetch Romance / Drama TV Series (Genre 18 - Drama covers most Romance on TV)
+   * Fetch Romance / Drama TV Series (Genres 10749 & 18)
    */
   async getRomanceSeries(page: number = 1): Promise<MovieData[]> {
     return getValidTVWithPagination('Romance Series', '/discover/tv', {
-      with_genres: '18',
+      with_genres: '10749|18',
       sort_by: 'popularity.desc'
     }, page, 20);
   },
