@@ -18,6 +18,7 @@ const WatchTVPage = React.lazy(() => import('../watch/WatchTVPage').then(m => ({
 const CategoryPage = React.lazy(() => import('../movie/CategoryPage').then(m => ({ default: m.CategoryPage })));
 const MoviePage = React.lazy(() => import('../movie/MoviePage').then(m => ({ default: m.MoviePage })));
 const TVShowsPage = React.lazy(() => import('../tv/TVShowsPage').then(m => ({ default: m.TVShowsPage })));
+const WhatsAppChannelPopup = React.lazy(() => import('../common/WhatsAppChannelPopup').then(m => ({ default: m.WhatsAppChannelPopup })));
 
 const PageLoader: React.FC = () => (
   <div className="w-full flex-grow flex flex-col items-center justify-center py-24 min-h-[400px] transition-all duration-300">
@@ -915,6 +916,11 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
           </Container>
         )}
       </div>
+
+      {/* WhatsApp Channel Popup - Only active on Home page */}
+      <React.Suspense fallback={null}>
+        <WhatsAppChannelPopup isHomePage={pageTitle === 'home'} />
+      </React.Suspense>
 
       {/* Embedded premium minimal footer */}
       <motion.footer
