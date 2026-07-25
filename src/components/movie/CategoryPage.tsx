@@ -22,6 +22,33 @@ interface CategoryConfig {
 }
 
 const CATEGORY_MAP: Record<string, CategoryConfig> = {
+  'trending-now': {
+    title: '🔥 Trending Now',
+    description: 'The most watched and talked-about movies right now.',
+    fetcher: (page) => movieService.getTrendingMovies(page)
+  },
+  'hollywood-hits': {
+    title: '🌟 Hollywood Hits',
+    description: 'High-budget blockbusters, Oscar nominees, and top English cinema releases.',
+    fetcher: (page) => movieService.getHollywoodMovies(page)
+  },
+  'editors-picks': {
+    title: "💎 Editor's Picks",
+    description: 'Handpicked cinematic gems, highly rated classics, and curated masterpieces.',
+    fetcher: async (page) => {
+      const [topRated, upcoming] = await Promise.all([
+        movieService.getTopRatedMovies(page),
+        movieService.getUpcomingMovies(page)
+      ]);
+      const mixed: MovieData[] = [];
+      const maxLen = Math.max(topRated.length, upcoming.length);
+      for (let i = 0; i < maxLen; i++) {
+        if (topRated[i]) mixed.push(topRated[i]);
+        if (upcoming[i]) mixed.push(upcoming[i]);
+      }
+      return mixed;
+    }
+  },
   'trending-in-india': {
     title: '🔥 Trending in India',
     description: 'The hottest Bollywood, Tollywood, and Kollywood cinematic releases dominating the nation.',
