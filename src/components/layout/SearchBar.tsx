@@ -193,13 +193,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     inputRef.current?.blur();
   };
 
-  // Trigger auto search navigation from other pages
   const handleInputChange = (newVal: string) => {
     onChange(newVal);
-
-    if (window.location.pathname !== '/search' && newVal.trim().length >= 2) {
-      navigate(`/search?q=${encodeURIComponent(newVal)}`);
-    }
   };
 
   return (
