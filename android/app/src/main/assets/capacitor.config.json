@@ -1,0 +1,9 @@
+{
+	"appId": "com.moviyfly.app",
+	"appName": "MoviyFly",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https",
+		"cleartext": true
+	}
+}

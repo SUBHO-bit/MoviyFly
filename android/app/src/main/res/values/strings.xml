@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MoviyFly</string>
+    <string name="title_activity_main">MoviyFly</string>
+    <string name="package_name">com.moviyfly.app</string>
+    <string name="custom_url_scheme">com.moviyfly.app</string>
+</resources>

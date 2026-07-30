@@ -146,7 +146,25 @@ export const AppLayout: React.FC = () => {
     });
   }, [activeItem, path]);
 
-  if (path === '/') {
+  const isAndroidApp = React.useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return Boolean(
+      (window as any).Capacitor?.isNativePlatform?.() ||
+      (window as any).Capacitor?.getPlatform?.() === 'android' ||
+      (window as any).Capacitor ||
+      /Capacitor/i.test(navigator.userAgent) ||
+      (/Android/i.test(navigator.userAgent) && /wv/i.test(navigator.userAgent)) ||
+      (window as any).isAndroidApp
+    );
+  }, []);
+
+  React.useEffect(() => {
+    if (path === '/' && isAndroidApp) {
+      navigate('/home', { replace: true });
+    }
+  }, [path, isAndroidApp]);
+
+  if (path === '/' && !isAndroidApp) {
     return (
       <React.Suspense fallback={<div className="min-h-screen bg-[#0B0B10]" />}>
         <LandingPage />
