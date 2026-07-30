@@ -1,8 +1,19 @@
-# Declare files that should always be treated as binary
+* text=auto
+
+# Declare binary files that should never undergo text/CRLF conversion
 *.jar binary
 *.aar binary
+*.so binary
+*.class binary
+*.png binary
+*.jpg binary
+*.keystore binary
+*.jks binary
 android/gradle/wrapper/gradle-wrapper.jar binary
 
-# Ensure scripts have correct line endings
+# Ensure gradlew shell scripts retain correct line endings
 gradlew text eol=lf
 gradlew.bat text eol=crlf
+android/gradlew text eol=lf
+android/gradlew.bat text eol=crlf
+

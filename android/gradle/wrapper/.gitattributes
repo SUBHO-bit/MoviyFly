@@ -1,0 +1,2 @@
+# Treat gradle-wrapper.jar strictly as binary blob to prevent line-ending corruption
+gradle-wrapper.jar binary
