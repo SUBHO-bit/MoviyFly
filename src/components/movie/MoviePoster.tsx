@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { motion } from 'motion/react';
+import { Trash2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { RatingBadge } from './RatingBadge';
 import { MovieActions } from './MovieActions';
@@ -13,6 +14,7 @@ export interface MoviePosterProps {
   onPlay?: (e: React.MouseEvent) => void;
   onWatchlistToggle?: (e: React.MouseEvent) => void;
   onMoreInfo?: (e: React.MouseEvent) => void;
+  onRemove?: (e: React.MouseEvent) => void;
   className?: string;
 }
 
@@ -24,6 +26,7 @@ export const MoviePoster = React.memo<MoviePosterProps>(({
   onPlay,
   onWatchlistToggle,
   onMoreInfo,
+  onRemove,
   className,
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
@@ -73,6 +76,25 @@ export const MoviePoster = React.memo<MoviePosterProps>(({
         <RatingBadge rating={rating} />
       </div>
 
+      {/* Quick Remove Button (Top-Right overlay when onRemove is provided) */}
+      {onRemove && (
+        <div className="absolute top-2.5 right-2.5 z-30">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onRemove(e);
+            }}
+            className="h-8 w-8 rounded-full bg-black/75 hover:bg-red-600 text-white/80 hover:text-white border border-white/20 hover:border-red-500/80 backdrop-blur-md flex items-center justify-center transition-all duration-200 shadow-lg cursor-pointer outline-none active:scale-90 group/removeBtn"
+            title="Remove from Continue Watching"
+            aria-label={`Remove ${title} from Continue Watching`}
+          >
+            <Trash2 className="h-4 w-4 group-hover/removeBtn:scale-110 transition-transform duration-200" strokeWidth={2} />
+          </button>
+        </div>
+      )}
+
       {/* Hover Overlay: Dark gradient from bottom/center up, Play controls, etc */}
       <div
         className={cn(
@@ -91,6 +113,7 @@ export const MoviePoster = React.memo<MoviePosterProps>(({
             onPlay={onPlay}
             onWatchlistToggle={onWatchlistToggle}
             onMoreInfo={onMoreInfo}
+            onRemove={onRemove}
             isInWatchlist={isInWatchlist}
           />
         </motion.div>
@@ -98,3 +121,4 @@ export const MoviePoster = React.memo<MoviePosterProps>(({
     </div>
   );
 });
+

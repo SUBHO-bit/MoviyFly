@@ -5,6 +5,7 @@ import { StreamingProvider } from './StreamingProvider';
 import { TMDBMovieDetails } from '../../types/movie';
 import { MovieData } from '../movie/MovieCard';
 import { getBackdropUrl, getPosterUrl } from '../../config/tmdb';
+import { ContinueWatchingManager } from './ContinueWatchingManager';
 
 interface MoviePlayerProps {
   tmdbId: string;
@@ -107,13 +108,7 @@ export const MoviePlayer: React.FC<MoviePlayerProps> = ({
             backdrop: backdrop,
           };
 
-          if (existingIdx >= 0) {
-            existing[existingIdx] = { ...existing[existingIdx], ...movieItem };
-          } else {
-            existing.unshift(movieItem);
-          }
-
-          localStorage.setItem('moviyfly_continue_watching', JSON.stringify(existing.slice(0, 20)));
+          ContinueWatchingManager.saveMovie(movieItem);
         } catch (err) {
           console.error('Failed to save movie to Continue Watching:', err);
         }

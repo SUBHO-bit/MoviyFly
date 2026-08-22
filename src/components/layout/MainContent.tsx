@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Play, Clapperboard, Film, RefreshCw } from 'lucide-react';
+import { Play, Clapperboard, Film, RefreshCw, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Container } from '../ui/Container';
@@ -10,6 +10,7 @@ import { MovieRowSkeleton } from '../movie/MovieRowSkeleton';
 import { movieService } from '../../services/movie.service';
 import { tvService } from '../../services/tv.service';
 import { heroService } from '../../services/hero.service';
+import { ContinueWatchingManager } from '../watch/ContinueWatchingManager';
 const MovieDetailsPage = React.lazy(() => import('../movie/MovieDetailsPage').then(m => ({ default: m.MovieDetailsPage })));
 const TVDetailsPage = React.lazy(() => import('../tv/TVDetailsPage').then(m => ({ default: m.TVDetailsPage })));
 const SearchPage = React.lazy(() => import('../search/SearchPage').then(m => ({ default: m.SearchPage })));
@@ -430,18 +431,30 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
     }
   }, []);
 
+  const [showClearContinueModal, setShowClearContinueModal] = React.useState(false);
+
+  const handleRemoveContinueWatching = React.useCallback((movie: MovieData) => {
+    ContinueWatchingManager.removeMovie(movie.id);
+  }, []);
+
+  const handleClearAllContinueWatching = React.useCallback(() => {
+    ContinueWatchingManager.removeAll();
+    setShowClearContinueModal(false);
+  }, []);
+
   React.useEffect(() => {
     loadData();
-    try {
-      const stored = localStorage.getItem('moviyfly_continue_watching');
-      if (stored) {
-        setContinueWatching(JSON.parse(stored));
-      } else {
-        setContinueWatching([]);
-      }
-    } catch (e) {
-      setContinueWatching([]);
-    }
+    // Initial fetch of continue watching
+    setContinueWatching(ContinueWatchingManager.getContinueWatching());
+
+    // Subscribe to reactive updates from player or actions
+    const unsubscribe = ContinueWatchingManager.subscribe(() => {
+      setContinueWatching(ContinueWatchingManager.getContinueWatching());
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, [loadData]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -655,6 +668,8 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
                   onPlayMovie={handlePlayMovie}
                   onMoreInfo={handleMoreInfo}
                   onToggleWatchlist={handleToggleWatchlist}
+                  onRemoveItem={handleRemoveContinueWatching}
+                  onRemoveAll={() => setShowClearContinueModal(true)}
                   watchlist={watchlist}
                   onSeeAll={() => navigate('/watchlist')}
                 />
@@ -998,6 +1013,51 @@ export const MainContent: React.FC<MainContentProps> = ({ pageTitle, collapsed =
           </div>
         </div>
       </motion.footer>
+
+      {/* Clear All Continue Watching Confirmation Modal */}
+      {showClearContinueModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2 }}
+            className="w-full max-w-md bg-[#13131A] border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col gap-5 text-left relative overflow-hidden"
+          >
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0 text-red-400">
+                <Trash2 className="h-6 w-6" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <h3 className="text-lg font-bold text-white tracking-tight">
+                  Clear Continue Watching?
+                </h3>
+                <p className="text-sm text-[#B3B3B8] leading-relaxed">
+                  Are you sure you want to remove all {continueWatching.length} {continueWatching.length === 1 ? 'title' : 'titles'} from your Continue Watching list? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowClearContinueModal(false)}
+                className="px-4 py-2 rounded-xl text-sm font-semibold text-[#B3B3B8] hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-colors cursor-pointer outline-none active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleClearAllContinueWatching}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/25 transition-all cursor-pointer outline-none active:scale-95"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Remove All</span>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

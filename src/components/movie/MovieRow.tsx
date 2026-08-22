@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { MovieCard, MovieData } from './MovieCard';
 
@@ -10,6 +10,8 @@ export interface MovieRowProps {
   onPlayMovie?: (movie: MovieData) => void;
   onMoreInfo?: (movie: MovieData) => void;
   onToggleWatchlist?: (movie: MovieData) => void;
+  onRemoveItem?: (movie: MovieData) => void;
+  onRemoveAll?: () => void;
   watchlist?: Record<string, boolean>;
   onSeeAll?: () => void;
   className?: string;
@@ -23,6 +25,8 @@ export const MovieRow = React.memo<MovieRowProps>(({
   onPlayMovie,
   onMoreInfo,
   onToggleWatchlist,
+  onRemoveItem,
+  onRemoveAll,
   watchlist = {},
   onSeeAll,
   className,
@@ -198,15 +202,32 @@ export const MovieRow = React.memo<MovieRowProps>(({
             </h3>
           </div>
 
-          {onSeeAll && (
-            <button
-              onClick={onSeeAll}
-              className="flex items-center gap-1.5 text-xs font-bold text-[#B3B3B8] hover:text-[#7C3AED] transition-colors cursor-pointer select-none outline-none group/btn"
-            >
-              <span>See All</span>
-              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-250 group-hover/btn:translate-x-1" strokeWidth={2} />
-            </button>
-          )}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {onRemoveAll && localMovies.length > 0 && (
+              <button
+                type="button"
+                onClick={onRemoveAll}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#B3B3B8] hover:text-red-400 bg-white/[0.04] hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 transition-all duration-200 cursor-pointer outline-none group/clear active:scale-95 shadow-sm"
+                title="Remove all movies from Continue Watching"
+                aria-label="Remove all movies from Continue Watching"
+              >
+                <Trash2 className="h-3.5 w-3.5 text-[#B3B3B8] group-hover/clear:text-red-400 transition-colors" />
+                <span className="hidden xs:inline">Remove All</span>
+                <span className="xs:hidden">Clear All</span>
+              </button>
+            )}
+
+            {onSeeAll && (
+              <button
+                type="button"
+                onClick={onSeeAll}
+                className="flex items-center gap-1.5 text-xs font-bold text-[#B3B3B8] hover:text-[#7C3AED] transition-colors cursor-pointer select-none outline-none group/btn"
+              >
+                <span>See All</span>
+                <ArrowRight className="h-3.5 w-3.5 transition-transform duration-250 group-hover/btn:translate-x-1" strokeWidth={2} />
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -269,6 +290,7 @@ export const MovieRow = React.memo<MovieRowProps>(({
                   onPlay={onPlayMovie}
                   onMoreInfo={onMoreInfo}
                   onToggleWatchlist={onToggleWatchlist}
+                  onRemove={onRemoveItem}
                 />
               </div>
             );

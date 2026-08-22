@@ -117,13 +117,7 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({
             backdrop: backdrop,
           };
 
-          if (existingIdx >= 0) {
-            existing[existingIdx] = { ...existing[existingIdx], ...tvItem };
-          } else {
-            existing.unshift(tvItem);
-          }
-
-          localStorage.setItem('moviyfly_continue_watching', JSON.stringify(existing.slice(0, 20)));
+          ContinueWatchingManager.saveMovie(tvItem);
         } catch (err) {
           console.error('Failed to save TV show to Continue Watching:', err);
         }

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Play, Plus, Check, Info } from 'lucide-react';
+import { Play, Plus, Check, Info, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 
@@ -7,6 +7,7 @@ export interface MovieActionsProps {
   onPlay?: (e: React.MouseEvent) => void;
   onWatchlistToggle?: (e: React.MouseEvent) => void;
   onMoreInfo?: (e: React.MouseEvent) => void;
+  onRemove?: (e: React.MouseEvent) => void;
   isInWatchlist?: boolean;
   className?: string;
 }
@@ -15,6 +16,7 @@ export const MovieActions: React.FC<MovieActionsProps> = ({
   onPlay,
   onWatchlistToggle,
   onMoreInfo,
+  onRemove,
   isInWatchlist = false,
   className,
 }) => {
@@ -64,6 +66,21 @@ export const MovieActions: React.FC<MovieActionsProps> = ({
       >
         <Info className="h-4.5 w-4.5" strokeWidth={1.5} />
       </motion.button>
+
+      {/* Remove from Continue Watching Button */}
+      {onRemove && (
+        <motion.button
+          onClick={onRemove}
+          whileHover={{ scale: 1.12 }}
+          whileTap={{ scale: 0.92 }}
+          className="h-10 w-10 rounded-full bg-black/50 hover:bg-red-600/80 border border-white/15 hover:border-red-500/40 text-white/80 hover:text-white flex items-center justify-center cursor-pointer outline-none focus:ring-1 focus:ring-red-500/40 transition-all duration-200"
+          title="Remove from Continue Watching"
+          aria-label="Remove from Continue Watching"
+        >
+          <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+        </motion.button>
+      )}
     </div>
   );
 };
+

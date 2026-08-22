@@ -27,6 +27,7 @@ export interface MovieCardProps {
   onPlay?: (movie: MovieData) => void;
   onMoreInfo?: (movie: MovieData) => void;
   onToggleWatchlist?: (movie: MovieData) => void;
+  onRemove?: (movie: MovieData) => void;
   className?: string;
 }
 
@@ -36,6 +37,7 @@ export const MovieCard = React.memo<MovieCardProps>(({
   onPlay,
   onMoreInfo,
   onToggleWatchlist,
+  onRemove,
   className,
 }) => {
   const linkPath = getDetailsPath(movie.id, movie.title);
@@ -75,6 +77,14 @@ export const MovieCard = React.memo<MovieCardProps>(({
           e.stopPropagation();
           onMoreInfo?.(movie);
         }}
+        onRemove={
+          onRemove
+            ? (e) => {
+                e.stopPropagation();
+                onRemove(movie);
+              }
+            : undefined
+        }
       />
 
       {/* Narrative Info: Title, Rating details and genre sub-pills */}
@@ -91,6 +101,7 @@ export const MovieCard = React.memo<MovieCardProps>(({
   return (
     prevProps.movie.id === nextProps.movie.id &&
     prevProps.isInWatchlist === nextProps.isInWatchlist &&
-    prevProps.className === nextProps.className
+    prevProps.className === nextProps.className &&
+    prevProps.onRemove === nextProps.onRemove
   );
 });
