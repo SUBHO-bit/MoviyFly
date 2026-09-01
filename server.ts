@@ -20,14 +20,10 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Memory cache system to cache TMDB responses for 10 minutes
+  // Memory cache system to cache TMDB responses for 30 minutes with stale-while-revalidate support
   const cache = new Map<string, { data: any; expiry: number }>();
-  const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-
-  // Circuit Breaker state to prevent blocking the app when TMDB API is unreachable/timing out
-  let isTmdbOffline = false;
-  let lastFailureTime = 0;
-  const CIRCUIT_BREAKER_COOLDOWN = 5 * 60 * 1000; // 5 minutes
+  const staleCache = new Map<string, any>();
+  const CACHE_TTL = 30 * 60 * 1000; // 30 minutes live cache
 
   // Health check endpoint
   app.get('/api/health', (req, res) => {
@@ -173,26 +169,6 @@ async function startServer() {
       }
     }
 
-    // Check circuit breaker first, BUT bypass it completely if we have a valid clickedTmdbId
-    if (isTmdbOffline && !hasValidTmdbId) {
-      if (now - lastFailureTime < CIRCUIT_BREAKER_COOLDOWN) {
-        console.log(`[TMDB Proxy] Circuit breaker active. Bypassing live TMDB API for endpoint: ${targetPath}`);
-        try {
-          const fallbackData = handleMockRequest(targetPath, queryParamsObj);
-          return res.json(fallbackData);
-        } catch (mockErr: any) {
-          return res.status(500).json({
-            error: 'Internal server error',
-            message: 'TMDB API is offline and local fallback engine failed',
-            details: mockErr.message
-          });
-        }
-      } else {
-        isTmdbOffline = false;
-        console.log('[TMDB Proxy] Circuit breaker cooldown passed. Resetting to online mode.');
-      }
-    }
-
     // If there is no token:
     if (!token) {
       const fallbackReason = 'TMDB Read Access Token is missing in environment variables';
@@ -202,6 +178,12 @@ async function startServer() {
       console.log(`TMDB response status: No response (Token Detail)`);
       console.log(`fallback detail: ${fallbackReason}`);
       console.log('-------------------------');
+
+      // Check if we have stale live cache first
+      if (staleCache.has(cacheKey)) {
+        console.log(`[TMDB Proxy] Returning stale cached TMDB data due to missing token for: ${targetPath}`);
+        return res.json(staleCache.get(cacheKey));
+      }
 
       try {
         const fallbackData = handleMockRequest(targetPath, queryParamsObj);
@@ -214,42 +196,57 @@ async function startServer() {
       }
     }
 
-    // Make the live request to TMDB
+    // Make live request to TMDB with 1 automatic retry on transient error/429
     let responseData: any = null;
     let responseOk = false;
     let responseStatus: string | number = 'Unknown';
     let fallbackReason: string | null = null;
-    const controller = new AbortController();
-    // 10-second timeout to allow slower TMDB requests to finish without premature aborts
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, 10000);
 
-    try {
-      console.log(`[TMDB Proxy] Requesting live TMDB -> ${tmdbUrl}`);
-      const response = await fetch(tmdbUrl, {
-        method: req.method,
-        headers: {
-          'Authorization': `Bearer ${token.trim()}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 12000); // 12 seconds per attempt
 
-      responseStatus = response.status;
-      if (response.ok) {
-        responseData = await response.json();
-        responseOk = true;
-      } else {
-        const statusText = response.statusText || '';
-        fallbackReason = `TMDB returned non-OK status ${response.status}: ${statusText}`;
+      try {
+        if (attempt > 1) {
+          console.log(`[TMDB Proxy] Retry attempt ${attempt} for -> ${tmdbUrl}`);
+        } else {
+          console.log(`[TMDB Proxy] Requesting live TMDB -> ${tmdbUrl}`);
+        }
+
+        const response = await fetch(tmdbUrl, {
+          method: req.method,
+          headers: {
+            'Authorization': `Bearer ${token.trim()}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        responseStatus = response.status;
+        if (response.ok) {
+          responseData = await response.json();
+          responseOk = true;
+          break;
+        } else if (response.status === 429 && attempt < 2) {
+          // Rate limit - brief delay before retry
+          console.warn(`[TMDB Proxy] Rate limited (429) on ${targetPath}, pausing 400ms before retry...`);
+          await new Promise(r => setTimeout(r, 400));
+        } else {
+          const statusText = response.statusText || '';
+          fallbackReason = `TMDB returned non-OK status ${response.status}: ${statusText}`;
+        }
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        responseStatus = err.name === 'AbortError' ? 'offline/timeout' : 'offline/network';
+        fallbackReason = 'offline status';
+        if (attempt < 2) {
+          await new Promise(r => setTimeout(r, 300));
+        }
       }
-    } catch (err: any) {
-      clearTimeout(timeoutId);
-      responseStatus = err.name === 'AbortError' ? 'offline/timeout' : 'offline/network';
-      fallbackReason = 'offline status';
     }
 
     // Add console logging for: clicked TMDB ID, requested endpoint, TMDB response status, fallback reason
@@ -269,15 +266,15 @@ async function startServer() {
           data: responseData,
           expiry: now + CACHE_TTL,
         });
+        staleCache.set(cacheKey, responseData);
       }
       return res.json(responseData);
     }
 
-    // Trip circuit breaker on failure to prevent stalling subsequent general/list requests (only if not details path)
-    if (!hasValidTmdbId) {
-      isTmdbOffline = true;
-      lastFailureTime = Date.now();
-      console.log(`[TMDB Proxy] Tripped circuit breaker for non-details endpoint: ${targetPath}`);
+    // If live fetch failed, prefer returning stale cache of actual TMDB data before resorting to mock
+    if (staleCache.has(cacheKey)) {
+      console.log(`[TMDB Proxy] Serving STALE live TMDB cache for ${targetPath} after fetch error.`);
+      return res.json(staleCache.get(cacheKey));
     }
 
     // Fall back to high-fidelity mock dataset even for valid TMDB IDs if the live request is offline

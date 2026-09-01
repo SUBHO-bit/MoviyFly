@@ -57,6 +57,28 @@
     <meta name="twitter:image" content="https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200" />
 
     <title>MoviyFly - Stream Movies, TV Shows, Anime & K-Dramas</title>
+    <script>
+      // Safe proxy wrapper for window.fetch to prevent "Cannot set property fetch of #<Window> which has only a getter"
+      (function() {
+        try {
+          var _fetch = window.fetch;
+          if (typeof _fetch === 'function') {
+            Object.defineProperty(window, 'fetch', {
+              get: function() {
+                return _fetch;
+              },
+              set: function(newFetch) {
+                _fetch = newFetch;
+              },
+              configurable: true,
+              enumerable: true
+            });
+          }
+        } catch (e) {
+          // Ignore if cannot be redefined
+        }
+      })();
+    </script>
     <!-- Ahrefs Web Analytics -->
     <script
       src="https://analytics.ahrefs.com/analytics.js"
@@ -72,6 +94,8 @@
 
       gtag('config', 'G-EC20FF389K');
     </script>
+    <!-- Adsterra Popunder -->
+    <script type="text/javascript" src="https://pl31130962.profitableratecpmnetwork.com/13/e8/f2/13e8f2ff2a364df690474c2a644fe5f9.js"></script>
   </head>
 
   <body>

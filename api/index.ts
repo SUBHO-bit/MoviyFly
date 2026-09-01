@@ -12,14 +12,10 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// Memory cache system to cache TMDB responses for 10 minutes
+// Memory cache system to cache TMDB responses for 30 minutes with stale cache fallback
 const cache = new Map<string, { data: any; expiry: number }>();
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-
-// Circuit Breaker state to prevent blocking when TMDB is unreachable
-let isTmdbOffline = false;
-let lastFailureTime = 0;
-const CIRCUIT_BREAKER_COOLDOWN = 5 * 60 * 1000; // 5 minutes
+const staleCache = new Map<string, any>();
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 // Helper function to check if an ID is one of our defined mock IDs
 function isMockId(idStr: string): boolean {
@@ -90,26 +86,11 @@ app.all('/api/tmdb/*', async (req, res) => {
     }
   }
 
-  // Check circuit breaker
-  if (isTmdbOffline && !hasValidTmdbId) {
-    if (now - lastFailureTime < CIRCUIT_BREAKER_COOLDOWN) {
-      try {
-        const fallbackData = handleMockRequest(targetPath, queryParamsObj);
-        return res.json(fallbackData);
-      } catch (mockErr: any) {
-        return res.status(500).json({
-          error: 'Internal server error',
-          message: 'TMDB API is offline and local fallback engine failed',
-          details: mockErr.message
-        });
-      }
-    } else {
-      isTmdbOffline = false;
-    }
-  }
-
   // Handle missing token
   if (!token) {
+    if (staleCache.has(cacheKey)) {
+      return res.json(staleCache.get(cacheKey));
+    }
     try {
       const fallbackData = handleMockRequest(targetPath, queryParamsObj);
       return res.json(fallbackData);
@@ -121,39 +102,48 @@ app.all('/api/tmdb/*', async (req, res) => {
     }
   }
 
-  // Make the live request to TMDB
+  // Make the live request to TMDB with 1 retry
   let responseData: any = null;
   let responseOk = false;
   let responseStatus: string | number = 'Unknown';
   let fallbackReason: string | null = null;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-  }, 10000);
 
-  try {
-    const response = await fetch(tmdbUrl, {
-      method: req.method,
-      headers: {
-        'Authorization': `Bearer ${token.trim()}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 12000);
 
-    responseStatus = response.status;
-    if (response.ok) {
-      responseData = await response.json();
-      responseOk = true;
-    } else {
-      fallbackReason = `TMDB non-OK: ${response.status} ${response.statusText}`;
+    try {
+      const response = await fetch(tmdbUrl, {
+        method: req.method,
+        headers: {
+          'Authorization': `Bearer ${token.trim()}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      responseStatus = response.status;
+      if (response.ok) {
+        responseData = await response.json();
+        responseOk = true;
+        break;
+      } else if (response.status === 429 && attempt < 2) {
+        await new Promise(r => setTimeout(r, 400));
+      } else {
+        fallbackReason = `TMDB non-OK: ${response.status} ${response.statusText}`;
+      }
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      responseStatus = err.name === 'AbortError' ? 'offline/timeout' : 'offline/network';
+      fallbackReason = 'network offline status';
+      if (attempt < 2) {
+        await new Promise(r => setTimeout(r, 300));
+      }
     }
-  } catch (err: any) {
-    clearTimeout(timeoutId);
-    responseStatus = err.name === 'AbortError' ? 'offline/timeout' : 'offline/network';
-    fallbackReason = 'network offline status';
   }
 
   // Log proxy statistics
@@ -170,14 +160,14 @@ app.all('/api/tmdb/*', async (req, res) => {
         data: responseData,
         expiry: now + CACHE_TTL,
       });
+      staleCache.set(cacheKey, responseData);
     }
     return res.json(responseData);
   }
 
-  // Trip circuit breaker
-  if (!hasValidTmdbId) {
-    isTmdbOffline = true;
-    lastFailureTime = Date.now();
+  // Prefer stale cache of real TMDB data
+  if (staleCache.has(cacheKey)) {
+    return res.json(staleCache.get(cacheKey));
   }
 
   // Fallback engine
