@@ -389,6 +389,9 @@ async function startServer() {
     <link rel="canonical" href="${meta.url}" />
     
     <!-- Open Graph / Facebook / Discord / Telegram / WhatsApp -->
+    <meta property="og:site_name" content="MoviyFly" />
+    <meta name="application-name" content="MoviyFly" />
+    <meta name="apple-mobile-web-app-title" content="MoviyFly" />
     <meta property="og:title" content="${meta.title.replace(/"/g, '&quot;')}" />
     <meta property="og:description" content="${meta.description.replace(/"/g, '&quot;')}" />
     <meta property="og:type" content="${meta.type}" />

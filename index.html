@@ -38,6 +38,9 @@
     <link rel="canonical" href="https://moviyfly.vercel.app/" />
 
     <!-- Open Graph -->
+    <meta property="og:site_name" content="MoviyFly" />
+    <meta name="application-name" content="MoviyFly" />
+    <meta name="apple-mobile-web-app-title" content="MoviyFly" />
     <meta property="og:title" content="MoviyFly - Stream Movies, TV Shows, Anime & K-Dramas" />
     <meta
       property="og:description"
@@ -46,6 +49,22 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://moviyfly.vercel.app/" />
     <meta property="og:image" content="https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200" />
+
+    <!-- Google Search Site Name Schema (Schema.org WebSite) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "MoviyFly",
+      "alternateName": ["Moviy Fly", "moviyfly", "MoviyFly App"],
+      "url": "https://moviyfly.vercel.app/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://moviyfly.vercel.app/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
