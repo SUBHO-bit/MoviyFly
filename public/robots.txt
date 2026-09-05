@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://moviyfly.vercel.app/sitemap.xml

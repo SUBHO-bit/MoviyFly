@@ -72,12 +72,27 @@ export function getMovieIdFromPath(path: string): string | null {
     const id = path.substring(7);
     return id || null;
   }
+  if (path.startsWith('/movies/')) {
+    const slug = path.substring(8);
+    // If it starts with a numeric ID or movie-, it's a movie details path
+    if (/^(\d+|movie-)/i.test(slug)) {
+      return slug || null;
+    }
+  }
   return null;
 }
 
 export function getTVIdFromPath(path: string): string | null {
   if (path.startsWith('/tv/')) {
     const id = path.substring(4);
+    return id || null;
+  }
+  if (path.startsWith('/tv-shows/')) {
+    const id = path.substring(10);
+    return id || null;
+  }
+  if (path.startsWith('/tvshows/')) {
+    const id = path.substring(9);
     return id || null;
   }
   return null;
@@ -88,6 +103,12 @@ export function getMovieIdFromWatchPath(path: string): string | null {
     const id = path.substring(13);
     return id || null;
   }
+  if (path.startsWith('/watch/')) {
+    const rest = path.substring(7);
+    if (!rest.startsWith('tv-') && !rest.startsWith('tv/')) {
+      return rest || null;
+    }
+  }
   return null;
 }
 
@@ -95,6 +116,13 @@ export function getTVIdFromWatchPath(path: string): string | null {
   if (path.startsWith('/watch/tv/')) {
     const id = path.substring(10);
     return id || null;
+  }
+  if (path.startsWith('/watch/')) {
+    const rest = path.substring(7);
+    if (rest.startsWith('tv-') || rest.startsWith('tv/')) {
+      const clean = rest.replace(/^tv\//, '');
+      return clean || null;
+    }
   }
   return null;
 }

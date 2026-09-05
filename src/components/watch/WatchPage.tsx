@@ -35,7 +35,7 @@ export const WatchPage: React.FC<WatchPageProps> = ({
   );
 
   // Strip prefix "movie-" if present to get the raw TMDB ID
-  const rawTmdbId = movieId.replace('movie-', '');
+  const rawTmdbId = movieId.replace('movie-', '').split('-')[0];
 
   const fetchMovieDetails = React.useCallback(async () => {
     setLoading(true);

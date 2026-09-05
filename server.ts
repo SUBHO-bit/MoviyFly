@@ -6,6 +6,16 @@ import dotenv from 'dotenv';
 import dns from 'dns';
 import { handleMockRequest } from './api/server-mock-data.js';
 import { generateSitemapRegistry, generateSitemapIndexXml, fetchMoviesFromTMDB, fetchTVsFromTMDB } from './src/lib/sitemap.js';
+import {
+  fetchServerMediaDetails,
+  renderHomePage,
+  renderCatalogPage,
+  renderDetailsPage,
+  renderWatchPage,
+  renderSearchPage,
+  renderWatchlistPage,
+  injectSeoIntoHtml
+} from './src/server/seoRenderer.js';
 
 // Set DNS resolution order to favor IPv4 to prevent connection failures in containerized environments
 dns.setDefaultResultOrder('ipv4first');
@@ -484,44 +494,150 @@ async function startServer() {
     return null;
   }
 
-  // SEO Meta injection route for details and watch pages
-  app.get(['/movie/:id', '/tv/:id', '/watch/movie/:id', '/watch/tv/:id'], async (req, res, next) => {
+  const getBaseUrl = (req: express.Request): string => {
+    const host = req.get('host') || 'moviyfly.vercel.app';
+    const protocol = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
+    return `${protocol}://${host}`;
+  };
+
+  const getTemplateHtml = async (reqUrl: string): Promise<string> => {
+    const isProd = process.env.NODE_ENV === 'production';
+    if (!isProd) {
+      const indexTemplate = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf-8');
+      const vite = viteInstance || app.get('vite');
+      if (vite && typeof vite.transformIndexHtml === 'function') {
+        return await vite.transformIndexHtml(reqUrl, indexTemplate);
+      }
+      return indexTemplate;
+    } else {
+      return fs.readFileSync(path.resolve(process.cwd(), 'dist/index.html'), 'utf-8');
+    }
+  };
+
+  // 1. Home Page SEO & Server Render Route
+  app.get(['/', '/home'], async (req, res, next) => {
+    try {
+      const baseUrl = getBaseUrl(req);
+      const templateHtml = await getTemplateHtml(req.originalUrl || req.url);
+      const rendered = renderHomePage(baseUrl);
+      const finalHtml = injectSeoIntoHtml(templateHtml, rendered);
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      res.send(finalHtml);
+    } catch (err) {
+      console.error('Error rendering Home page SEO:', err);
+      next();
+    }
+  });
+
+  // 2. Movies and TV Shows Catalog SEO & Server Render Route
+  app.get(['/movies', '/tv-shows', '/tvshows'], async (req, res, next) => {
+    try {
+      const baseUrl = getBaseUrl(req);
+      const templateHtml = await getTemplateHtml(req.originalUrl || req.url);
+      const isTv = req.path.includes('tv');
+      const rendered = renderCatalogPage(isTv ? 'tvshows' : 'movies', baseUrl);
+      const finalHtml = injectSeoIntoHtml(templateHtml, rendered);
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      res.send(finalHtml);
+    } catch (err) {
+      console.error('Error rendering catalog SEO:', err);
+      next();
+    }
+  });
+
+  // 3. Movie and TV Show Details Pages (handles /movie/:id, /movies/:id, /tv/:id, /tv-shows/:id, /tvshows/:id)
+  app.get(['/movie/:id', '/movies/:id', '/tv/:id', '/tv-shows/:id', '/tvshows/:id'], async (req, res, next) => {
     try {
       const { id } = req.params;
-      const cleanId = id.replace('movie-', '').replace('tv-', '').split('-')[0];
       const pathName = req.path;
-      const isTv = pathName.includes('/tv/') || pathName.includes('/watch/tv/');
+      const baseUrl = getBaseUrl(req);
+
+      // If it's /movies/:slug and slug is NOT an ID, it's a category page
+      if (pathName.startsWith('/movies/') && !/^(\d+|movie-)/i.test(id)) {
+        const templateHtml = await getTemplateHtml(req.originalUrl || req.url);
+        const rendered = renderCatalogPage('movies', baseUrl);
+        const finalHtml = injectSeoIntoHtml(templateHtml, rendered);
+        res.set('Content-Type', 'text/html; charset=utf-8');
+        return res.send(finalHtml);
+      }
+
+      const cleanId = id.replace('movie-', '').replace('tv-', '').split('-')[0];
+      const isTv = pathName.startsWith('/tv/') || pathName.startsWith('/tv-shows/') || pathName.startsWith('/tvshows/');
       const type = isTv ? 'tv' : 'movie';
       const token = process.env.TMDB_READ_ACCESS_TOKEN || process.env.TMDB_ACCESS_TOKEN;
 
-      const metaData = await fetchMetadataForRoute(type, cleanId, token);
-      
-      const isProd = process.env.NODE_ENV === 'production';
-      let html = '';
-      if (!isProd) {
-        const indexTemplate = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf-8');
-        // Let Vite transform index.html so dev mode CSS and hot-reloads still work
-        html = await (viteInstance || app.get('vite')).transformIndexHtml(req.url, indexTemplate);
-      } else {
-        html = fs.readFileSync(path.resolve(process.cwd(), 'dist/index.html'), 'utf-8');
+      const media = await fetchServerMediaDetails(type, cleanId, token);
+      const templateHtml = await getTemplateHtml(req.originalUrl || req.url);
+
+      if (media) {
+        const rendered = renderDetailsPage(media, baseUrl, req.originalUrl || req.url);
+        const finalHtml = injectSeoIntoHtml(templateHtml, rendered);
+        res.set('Content-Type', 'text/html; charset=utf-8');
+        return res.send(finalHtml);
       }
 
-      if (metaData) {
-        const meta = {
-          title: `${metaData.title} - MoviyFly`,
-          description: getShortDescription(metaData.description),
-          image: formatImageUrl(metaData.image),
-          url: `${req.protocol}://${req.get('host')}${req.originalUrl}`,
-          type: isTv ? 'video.tv_show' : 'video.movie'
-        };
-        html = injectMetaTags(html, meta);
-      }
-
-      res.set('Content-Type', 'text/html');
-      res.send(html);
+      // If media detail fetch failed, render catalog fallback
+      const fallbackRendered = renderCatalogPage(isTv ? 'tvshows' : 'movies', baseUrl);
+      const finalHtml = injectSeoIntoHtml(templateHtml, fallbackRendered);
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      res.send(finalHtml);
     } catch (err) {
-      console.error('Error in SEO meta injection:', err);
-      next(); // fallback to normal flow if something breaks
+      console.error('Error in details page SEO rendering:', err);
+      next();
+    }
+  });
+
+  // 4. Watch Pages SEO & Server Render Route (/watch/:id, /watch/movie/:id, /watch/tv/:id)
+  app.get(['/watch/:id', '/watch/movie/:id', '/watch/tv/:id'], async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const pathName = req.path;
+      const baseUrl = getBaseUrl(req);
+      const cleanId = id.replace('movie-', '').replace('tv-', '').split('-')[0];
+      const isTv = pathName.startsWith('/watch/tv/') || (pathName.startsWith('/watch/') && (id.startsWith('tv-') || id.startsWith('tv/')));
+      const type = isTv ? 'tv' : 'movie';
+      const token = process.env.TMDB_READ_ACCESS_TOKEN || process.env.TMDB_ACCESS_TOKEN;
+
+      const media = await fetchServerMediaDetails(type, cleanId, token);
+      const templateHtml = await getTemplateHtml(req.originalUrl || req.url);
+
+      const rendered = renderWatchPage(type, cleanId, media, baseUrl);
+      const finalHtml = injectSeoIntoHtml(templateHtml, rendered);
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      res.send(finalHtml);
+    } catch (err) {
+      console.error('Error in watch page SEO rendering:', err);
+      next();
+    }
+  });
+
+  // 5. Search Page SEO & Server Render Route
+  app.get('/search', async (req, res, next) => {
+    try {
+      const baseUrl = getBaseUrl(req);
+      const templateHtml = await getTemplateHtml(req.originalUrl || req.url);
+      const rendered = renderSearchPage(baseUrl);
+      const finalHtml = injectSeoIntoHtml(templateHtml, rendered);
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      res.send(finalHtml);
+    } catch (err) {
+      console.error('Error rendering Search SEO:', err);
+      next();
+    }
+  });
+
+  // 6. Watchlist Page SEO & Server Render Route
+  app.get('/watchlist', async (req, res, next) => {
+    try {
+      const baseUrl = getBaseUrl(req);
+      const templateHtml = await getTemplateHtml(req.originalUrl || req.url);
+      const rendered = renderWatchlistPage(baseUrl);
+      const finalHtml = injectSeoIntoHtml(templateHtml, rendered);
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      res.send(finalHtml);
+    } catch (err) {
+      console.error('Error rendering Watchlist SEO:', err);
+      next();
     }
   });
 

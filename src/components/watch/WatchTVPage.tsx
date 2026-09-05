@@ -42,7 +42,7 @@ export const WatchTVPage: React.FC<WatchTVPageProps> = ({
   );
 
   // Raw numeric ID
-  const rawTmdbId = tvId.replace('tv-', '');
+  const rawTmdbId = tvId.replace('tv-', '').split('-')[0];
 
   // 1. Fetch TV Details on mount or tvId change
   const fetchTVShowDetails = React.useCallback(async () => {

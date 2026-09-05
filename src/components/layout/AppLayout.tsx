@@ -32,14 +32,28 @@ export const AppLayout: React.FC = () => {
     if (path.startsWith('/tv/')) {
       return 'tv-details';
     }
+    if (path.startsWith('/tv-shows/') || path.startsWith('/tvshows/')) {
+      return 'tv-details';
+    }
     if (path.startsWith('/watch/movie/')) {
       return 'watch-movie';
     }
     if (path.startsWith('/watch/tv/')) {
       return 'watch-tv';
     }
+    if (path.startsWith('/watch/')) {
+      const rest = path.substring(7);
+      return (rest.startsWith('tv-') || rest.startsWith('tv/')) ? 'watch-tv' : 'watch-movie';
+    }
     if (path.startsWith('/movies/')) {
+      const slug = path.substring(8);
+      if (/^(\d+|movie-)/i.test(slug)) {
+        return 'movie-details';
+      }
       return 'category';
+    }
+    if (path === '/tv-shows' || path === '/tvshows') {
+      return 'tvshows';
     }
     const cleanPath = path.replace('/', '') || 'home';
     return cleanPath;

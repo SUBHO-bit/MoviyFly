@@ -1,6 +1,6 @@
 {
   "name": "MoviyFly",
-  "description": "A premium movie streaming design system and OTT platform layout foundation.",
+  "description": "Discover trending movies, TV shows, anime and K-dramas on MoviyFly. Browse thousands of titles, explore new releases, and enjoy a modern entertainment discovery platform.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
