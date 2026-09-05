@@ -18,41 +18,115 @@ export interface SitemapGeneratorOptions {
 const DEFAULT_BASE_URL = 'https://moviyfly.vercel.app';
 
 /**
- * Formats a date into ISO 8601 (YYYY-MM-DD) standard.
+ * Validates whether a date string strictly conforms to W3C / ISO 8601 standard (YYYY-MM-DD)
+ * and represents a genuine calendar date.
+ */
+export function isValidSitemapDate(dateStr: unknown): boolean {
+  if (typeof dateStr !== 'string' || !dateStr.trim()) {
+    return false;
+  }
+  const trimmed = dateStr.trim();
+  
+  // Strict regex for YYYY-MM-DD
+  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return false;
+  }
+
+  const y = parseInt(match[1], 10);
+  const m = parseInt(match[2], 10);
+  const d = parseInt(match[3], 10);
+
+  // Cinema & television timeline range bounds (1888 to 2100)
+  if (isNaN(y) || y < 1888 || y > 2100) {
+    return false;
+  }
+  if (isNaN(m) || m < 1 || m > 12) {
+    return false;
+  }
+  if (isNaN(d) || d < 1 || d > 31) {
+    return false;
+  }
+
+  // Exact calendar validation via Date.UTC (verifies days in month & leap years)
+  const testDate = new Date(Date.UTC(y, m - 1, d));
+  if (
+    testDate.getUTCFullYear() !== y ||
+    testDate.getUTCMonth() !== m - 1 ||
+    testDate.getUTCDate() !== d
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Formats a date into ISO 8601 (YYYY-MM-DD) standard using UTC.
+ * Always produces a valid date.
  */
 export function formatSitemapDate(date: Date = new Date()): string {
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
+  const d = (date instanceof Date && !isNaN(date.getTime())) ? date : new Date();
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 }
 
 /**
  * Normalizes any string or Date into YYYY-MM-DD format.
- * Falls back to today's date if empty or invalid.
+ * Returns undefined if input is missing, empty, or invalid.
+ * Strictly adheres to Google Search Console / W3C Datetime specifications.
+ * NEVER returns 'Invalid Date', 'undefined', 'null', or falls back to today's date.
  */
-export function normalizeSitemapDate(input?: string | Date | null): string {
+export function normalizeSitemapDate(input?: string | Date | null): string | undefined {
   if (!input) {
-    return formatSitemapDate();
+    return undefined;
   }
 
   if (input instanceof Date) {
-    return formatSitemapDate(input);
+    if (isNaN(input.getTime())) {
+      return undefined;
+    }
+    const y = input.getUTCFullYear();
+    const m = input.getUTCMonth() + 1;
+    const d = input.getUTCDate();
+    const formatted = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    return isValidSitemapDate(formatted) ? formatted : undefined;
+  }
+
+  if (typeof input !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = input.trim();
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null' || trimmed === 'Invalid Date') {
+    return undefined;
   }
 
   // Handle YYYY-MM-DD pattern
-  const match = input.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (match) {
-    return `${match[1]}-${match[2]}-${match[3]}`;
+    const candidate = `${match[1]}-${match[2]}-${match[3]}`;
+    if (isValidSitemapDate(candidate)) {
+      return candidate;
+    }
+    return undefined;
   }
 
   // Try parsing general Date format
-  const parsed = new Date(input);
+  const parsed = new Date(trimmed);
   if (!isNaN(parsed.getTime())) {
-    return formatSitemapDate(parsed);
+    const y = parsed.getUTCFullYear();
+    const m = parsed.getUTCMonth() + 1;
+    const d = parsed.getUTCDate();
+    const candidate = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    if (isValidSitemapDate(candidate)) {
+      return candidate;
+    }
   }
 
-  return formatSitemapDate();
+  return undefined;
 }
 
 /**
@@ -154,12 +228,16 @@ export function generateMovieSitemapEntry(
 ): SitemapEntry {
   const baseUrl = options?.baseUrl || DEFAULT_BASE_URL;
   const slug = getMovieSlug(item);
-  return {
+  const validLastMod = normalizeSitemapDate(item.lastmod);
+  const entry: SitemapEntry = {
     loc: `${baseUrl}/movie/${slug}`,
-    lastmod: normalizeSitemapDate(item.lastmod),
     changefreq: 'weekly',
     priority: 0.8,
   };
+  if (validLastMod) {
+    entry.lastmod = validLastMod;
+  }
+  return entry;
 }
 
 /**
@@ -171,12 +249,16 @@ export function generateTVSitemapEntry(
 ): SitemapEntry {
   const baseUrl = options?.baseUrl || DEFAULT_BASE_URL;
   const slug = getTVSlug(item);
-  return {
+  const validLastMod = normalizeSitemapDate(item.lastmod);
+  const entry: SitemapEntry = {
     loc: `${baseUrl}/tv/${slug}`,
-    lastmod: normalizeSitemapDate(item.lastmod),
     changefreq: 'weekly',
     priority: 0.8,
   };
+  if (validLastMod) {
+    entry.lastmod = validLastMod;
+  }
+  return entry;
 }
 
 /**
@@ -283,12 +365,12 @@ async function fetchFreshMoviesFromTMDB(baseUrl: string): Promise<DynamicMediaIt
       if (data && Array.isArray(data.results)) {
         for (const movie of data.results) {
           if (movie && movie.id) {
-            // Check if native release_date exists and is non-empty
-            const hasReleaseDate = !!movie.release_date && typeof movie.release_date === 'string' && movie.release_date.trim().length > 0;
+            // Validate source release_date strictly; if missing or invalid, leave undefined (never fallback to today)
+            const validLastMod = normalizeSitemapDate(movie.release_date);
             allMovies.push({
               id: movie.id,
               title: movie.title || movie.original_title || 'Untitled Movie',
-              lastmod: hasReleaseDate ? normalizeSitemapDate(movie.release_date) : formatSitemapDate(),
+              lastmod: validLastMod,
               popularity: typeof movie.popularity === 'number' ? movie.popularity : 0,
             });
           }
@@ -309,8 +391,8 @@ async function fetchFreshMoviesFromTMDB(baseUrl: string): Promise<DynamicMediaIt
       seenIds.add(movie.id);
       uniqueMovies.push(movie);
       
-      // Count items that have an actual release_date (not fallback to today)
-      if (movie.lastmod && movie.lastmod !== formatSitemapDate()) {
+      // Count items that have a verified valid release_date
+      if (movie.lastmod) {
         releaseDateCount++;
       }
     }
@@ -385,12 +467,12 @@ async function fetchFreshTVsFromTMDB(baseUrl: string): Promise<DynamicMediaItem[
       if (data && Array.isArray(data.results)) {
         for (const tv of data.results) {
           if (tv && tv.id) {
-            // Check if native first_air_date exists and is non-empty
-            const hasFirstAirDate = !!tv.first_air_date && typeof tv.first_air_date === 'string' && tv.first_air_date.trim().length > 0;
+            // Validate source first_air_date strictly; if missing or invalid, leave undefined (never fallback to today)
+            const validLastMod = normalizeSitemapDate(tv.first_air_date);
             allTVs.push({
               id: tv.id,
               name: tv.name || tv.original_name || 'Untitled TV Show',
-              lastmod: hasFirstAirDate ? normalizeSitemapDate(tv.first_air_date) : formatSitemapDate(),
+              lastmod: validLastMod,
               popularity: typeof tv.popularity === 'number' ? tv.popularity : 0,
             });
           }
@@ -411,8 +493,8 @@ async function fetchFreshTVsFromTMDB(baseUrl: string): Promise<DynamicMediaItem[
       seenIds.add(tv.id);
       uniqueTVs.push(tv);
 
-      // Count items that have an actual first_air_date (not fallback to today)
-      if (tv.lastmod && tv.lastmod !== formatSitemapDate()) {
+      // Count items that have a verified valid first_air_date
+      if (tv.lastmod) {
         firstAirDateCount++;
       }
     }
@@ -493,6 +575,17 @@ export function validateSitemapProtocol(xml: string, isIndex: boolean = false): 
         // An unescaped ampersand in XML is illegal unless part of an entity reference
         if (urlText.includes('&') && !/&amp;|&quot;|&apos;|&lt;|&gt;/.test(urlText)) {
           errors.push(`Sitemap contains unescaped ampersand in location: ${urlText}`);
+        }
+      }
+    }
+
+    // Check 4: Validate all <lastmod> dates against W3C/ISO 8601 standards
+    const lastmodMatches = xml.match(/<lastmod>(.*?)<\/lastmod>/g);
+    if (lastmodMatches) {
+      for (const lmTag of lastmodMatches) {
+        const val = lmTag.replace(/<\/?lastmod>/g, '').trim();
+        if (!isValidSitemapDate(val)) {
+          errors.push(`Sitemap contains invalid lastmod date: "${val}"`);
         }
       }
     }
@@ -638,8 +731,13 @@ export function buildSitemapXml(entries: SitemapEntry[]): string {
     const lines = ['  <url>'];
     lines.push(`    <loc>${escapeXml(entry.loc)}</loc>`);
     
+    // Only emit <lastmod> if it is a strictly valid W3C ISO 8601 date.
+    // Never emit empty, null, undefined, "Invalid Date", or malformed date values.
     if (entry.lastmod) {
-      lines.push(`    <lastmod>${escapeXml(entry.lastmod)}</lastmod>`);
+      const sanitizedDate = normalizeSitemapDate(entry.lastmod);
+      if (sanitizedDate) {
+        lines.push(`    <lastmod>${escapeXml(sanitizedDate)}</lastmod>`);
+      }
     }
     if (entry.changefreq) {
       lines.push(`    <changefreq>${entry.changefreq}</changefreq>`);
